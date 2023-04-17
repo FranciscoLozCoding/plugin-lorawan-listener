@@ -1,15 +1,11 @@
-# select a base image
-FROM waggle/plugin-base:1.1.1-base
+FROM python:3.8-alpine
 
-# put all of our apps code in /app
-WORKDIR /app
-
-# install all python dependencies
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# copy rest of our code
-COPY . .
+COPY lorawan_listener.py .
+COPY parse.py .
+COPY Message.py .
 
-# define how to run our code
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3" , "lorawan_listener.py"]
+#ENTRYPOINT ["python3" , "lorawan_listener.py", "--debug", "--dry"] to debug and no messages will be broadcast to Beehive
