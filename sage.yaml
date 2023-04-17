@@ -1,11 +1,11 @@
-name: ""
+name: "lorawan-listener"
 description: ""
-keywords: ""
-authors: "Your Name <your.email@somewhere.org>"
+keywords: "lorawan"
+authors: "Francisco Lozano"
 collaborators: ""
 funding: ""
 license: ""
-homepage: "https://github.com/waggle-sensor/edge-app-template"
+homepage: "https://github.com/FranciscoLozCoding/plugin-lorawan-listener"
 source:
   architectures:
     - "linux/amd64"
