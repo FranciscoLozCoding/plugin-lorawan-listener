@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: plugin-lorawan-listener
+    app.kubernetes.io/created-by: pluginctl
+    app.kubernetes.io/managed-by: pluginctl
+    app.kubernetes.io/name: plugin-lorawan-listener
+    role: plugin
+    sagecontinuum.org/plugin-job: Pluginctl
+    sagecontinuum.org/plugin-task: plugin-lorawan-listener
+    sagecontinuum.org/role: plugin
+  name: plugin-lorawan-listener
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: plugin-lorawan-listener
+      app.kubernetes.io/created-by: pluginctl
+      app.kubernetes.io/managed-by: pluginctl
+      app.kubernetes.io/name: plugin-lorawan-listener
+      role: plugin
+      sagecontinuum.org/plugin-job: Pluginctl
+      sagecontinuum.org/plugin-task: plugin-lorawan-listener
+      sagecontinuum.org/role: plugin
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: plugin-lorawan-listener
+        app.kubernetes.io/created-by: pluginctl
+        app.kubernetes.io/managed-by: pluginctl
+        app.kubernetes.io/name: plugin-lorawan-listener
+        role: plugin
+        sagecontinuum.org/plugin-job: Pluginctl
+        sagecontinuum.org/plugin-task: plugin-lorawan-listener
+        sagecontinuum.org/role: plugin
+    spec: 
+      containers:
+      - env:
+        - name: MQTT_SERVER_HOST
+          value: "wes-rabbitmq"
+        - name: MQTT_SERVER_PORT
+          value: "1883"
+        - name: MQTT_SUBSCRIBE_TOPIC
+          value: "application/#"
+        - name: PULSE_SERVER
+          value: tcp:wes-audio-server.default.svc.cluster.local:4713
+        - name: WAGGLE_PLUGIN_HOST
+          value: wes-rabbitmq.default.svc.cluster.local
+        - name: WAGGLE_PLUGIN_PORT
+          value: "5672"
+        - name: WAGGLE_PLUGIN_USERNAME
+          value: plugin
+        - name: WAGGLE_PLUGIN_PASSWORD
+          value: plugin
+        - name: WAGGLE_GPS_SERVER
+          value: wes-gps-server.default.svc.cluster.local
+        - name: WAGGLE_APP_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: ROS_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ROS_MASTER_URI
+          value: http://wes-roscore.default.svc.cluster.local:11311
+        - name: WAGGLE_SCOREBOARD
+          value: wes-scoreboard.default.svc.cluster.local
+        - name: HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: 10.31.81.1:5000/local/plugin-lorawan-listener:latest
+        name: plugin-lorawan-listener
+        #args: ["--debug", "--dry"] to debug and no messages will be broadcast to Beehive
+        resources:
+          requests:
+            cpu: 50m
+            memory: 25Mi
+          limits:
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /run/waggle/uploads
+          name: uploads
+        - mountPath: /run/waggle/data-config.json
+          name: waggle-data-config
+          subPath: data-config.json
+        - mountPath: /etc/asound.conf
+          name: wes-audio-server-plugin-conf
+          subPath: asound.conf
+      initContainers:
+      - command:
+        - /update-app-cache
+        - set
+        - --nodename
+        - $(HOST)
+        - app-meta.$(WAGGLE_APP_ID)
+        - '{"host":"$(HOST)","job":"Pluginctl","task":"plugin-lorawan-listener","plugin":"10.31.81.1:5000/local/plugin-lorawan-listener:latest"}'
+        env:
+        - name: WAGGLE_APP_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: waggle/app-meta-cache:0.1.1
+        name: init-app-meta-cache
+        resources: {}
+      nodeSelector:
+        k3s.io/hostname: 000048b02d0766be.ws-nxcore
+      priorityClassName: wes-app-priority
+      serviceAccountName: wes-plugin-account
+      volumes:
+      - hostPath:
+          path: /media/plugin-data/uploads/Pluginctl/plugin-lorawan-listener/latest
+          type: DirectoryOrCreate
+        name: uploads
+      - configMap:
+          name: waggle-data-config
+        name: waggle-data-config
+      - configMap:
+          name: wes-audio-server-plugin-conf
+        name: wes-audio-server-plugin-conf
+
