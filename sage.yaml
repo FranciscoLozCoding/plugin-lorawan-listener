@@ -1,6 +1,6 @@
 name: "lorawan-listener"
-description: ""
-keywords: "lorawan"
+description: "An app to receive data from LoRaWAN devices"
+keywords: "LoRaWAN"
 authors: "Francisco Lozano"
 collaborators: ""
 funding: ""
