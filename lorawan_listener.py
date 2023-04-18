@@ -18,7 +18,7 @@ def main():
     )
     parser.add_argument(
         "--mqtt-server-ip",
-        default=os.getenv("MQTT_SERVER_HOST", "127.0.0.1"),
+        default=os.getenv("MQTT_SERVER_HOST", "wes-rabbitmq"),
         help="MQTT server IP address",
     )
     parser.add_argument(
