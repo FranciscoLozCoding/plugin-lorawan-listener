@@ -20,12 +20,6 @@ def on_message_publish(client, userdata, message):
     bytes = base64.b64decode(bytes_b64) 
     val = bytes.decode("utf-8")
 
-    #if number convert to int
-    try:
-        val = int(val)
-    except:
-        pass
-
     #remove dynamic metadata
     try:
         metadata = clean_message_dict(metadata)
