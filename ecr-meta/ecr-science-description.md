@@ -6,6 +6,8 @@ When the plugin receives data from a LoRaWAN device, it publishes that data to t
 
 To help users identify where the data came from, the plugin includes metadata when it publishes the data to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the data was collected.
 
+This plugin currently only works in the US Region due to regulations in radio channels and [wes-chirpstack](https://github.com/waggle-sensor/waggle-edge-stack/tree/main/kubernetes/wes-chirpstack) being set up for US Region.
+
 # Using the code
 
 Before the plugin can work...
@@ -13,7 +15,7 @@ Before the plugin can work...
 1) [WES access to the RAK concentrator has to be enabled](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#enabling-wes-access-to-the-rak-concentrator)
 1) [LoRa End Device is activated via OTAA](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
 
->For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggle-lorawan)
+For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggle-lorawan)
 
 # Arguments
 
