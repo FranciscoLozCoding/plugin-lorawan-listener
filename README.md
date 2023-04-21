@@ -13,11 +13,9 @@ To help users identify where the data came from, the plugin includes metadata wh
 ## Prerequisites
 
 Before the plugin can work...
-1) Rpi with RAK concentrator has to be discoverable by K3s Cluster
+1) [Rpi with RAK concentrator has to be discoverable by K3s Cluster](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md##setting-up-rak-discover-kit-2-to-be-discoverable-by-wes)
 1) [WES access to the RAK concentrator has to be enabled](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#enabling-wes-access-to-the-rak-concentrator)
 1) [LoRa End Device is activated via OTAA](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
-
->TODO: add link to waggle lorawan repo to first step to new section about setting up RAK Discover Kit 2
 
 >For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggle-lorawan)
 
@@ -71,7 +69,7 @@ Each is appropriate for different use cases and integrations, but generally if y
 
 ### Subscribing to lorawan-listener plugin
 
-To subscribe to the lorawan-listener plugin, your plugin must be running on the same node as the lorawan-listener. You can refer to the [Subscribing to other measurements](https://github.com/waggle-sensor/pywaggle/blob/main/docs/writing-a-plugin.md#subscribing-to-other-measurements) resource to learn how to subscribe to measurements. Additionally, you can find an example of a plugin that uses the lorawan-listener plugin in this repository called [INSERT REPO HERE]().
+To subscribe to the lorawan-listener plugin, your plugin must be running on the same node as the lorawan-listener. You can refer to the [Subscribing to other measurements](https://github.com/waggle-sensor/pywaggle/blob/main/docs/writing-a-plugin.md#subscribing-to-other-measurements) resource to learn how to subscribe to measurements. Additionally, you can find an example of a plugin that uses the lorawan-listener plugin in this repository called [plugin-lorawan-example](https://github.com/waggle-sensor/plugin-lorawan-example).
 
 ### Using the Data API
 
@@ -87,10 +85,6 @@ curl -H 'Content-Type: application/json' https://data.sagecontinuum.org/api/v1/q
     }
 }'
 ```
-
-## Consumer Example
-
->TODO: add this section to another repo instead of this repo
 
 ## Additional Information
 
