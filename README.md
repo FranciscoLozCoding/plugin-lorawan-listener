@@ -1,5 +1,12 @@
 # LoRaWAN Listener Plugin Usage Instructions
 
+## TO DO
+
+- Get device-labeler to recognize gateway and label rpi with `resource.lorawan=true` (eliminates prereq 2)
+- Get rak rpi to run plugins
+- automate prereq 1 (maybe with ansible)
+- publish lorawan data locally (talk to Sean about this Node feature)
+
 ## About The Plugin
 
 This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive data from LoRaWAN (Long Range Wide Area Network) devices. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
