@@ -75,7 +75,7 @@ spec:
               fieldPath: spec.nodeName
         image: 10.31.81.1:5000/local/plugin-lorawan-listener:latest
         name: plugin-lorawan-listener
-        #args: ["--debug", "--dry"] to debug and no messages will be broadcast to Beehive
+        args: ["--debug", "--dry"]
         resources:
           requests:
             cpu: 50m
