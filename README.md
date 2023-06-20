@@ -2,11 +2,21 @@
 
 ## About The Plugin
 
-This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive data from LoRaWAN (Long Range Wide Area Network) devices. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
+This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
 
-When the plugin receives data from a LoRaWAN device, it publishes that data to the beehive. This is where all the data received from the LoRaWAN devices is stored. Other users can then subscribe to this measurement called *lorawan.data* to access the data, or use it to build larger applications that rely on LoRaWAN data.
+When the plugin receives data from a LoRaWAN device, it publishes that data to the beehive. This is where all the data received from the LoRaWAN devices is stored. Other users can then subscribe to the measurement(s) to access the data, or use it to build larger applications that rely on LoRaWAN data.
 
-To help users identify where the data came from, the plugin includes metadata when it publishes the data to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the data was collected.
+To help users identify where the value came from, the plugin includes metadata when it publishes the value to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the value was collected.
+
+The plugin expects the payload in the following format:
+```
+payload = {
+  measurements:[
+  {name:"<measurement name>",value:<measurement value>},
+  {name:"<measurement name>",value:<measurement value>}, ...
+  ]
+}
+```
 
 >IMPORTANT: This plugin currently only works in the US Region due to regulations in radio channels and [wes-chirpstack](https://github.com/waggle-sensor/waggle-edge-stack/tree/main/kubernetes/wes-chirpstack) being set up for US Region.
 
@@ -15,12 +25,157 @@ To help users identify where the data came from, the plugin includes metadata wh
 Before the plugin can work...
 1) [Rpi with RAK concentrator has to be discoverable by K3s Cluster](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md##setting-up-rak-discover-kit-2-to-be-discoverable-by-wes)
 1) [WES access to the RAK concentrator has to be enabled](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#enabling-wes-access-to-the-rak-concentrator)
-1) [LoRa End Device is activated via OTAA](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
+1) [LoRa End Device is activated](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
+1) The Payload Conforms with LoRaWAN Listener
 
 >For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggle-lorawan)
 
 To configure any LoRaWan settings such as devices, gateways, and applications the chirpstack Web UI will be used. The Web UI can be accessed by establishing a proxy connection to `wes-chirpstack-server` running on the node. If the proxy connection is established using port `8080`, the web address is http://localhost:8080/. See [Configuring the WES LoraWan](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan) on how to access the chirpstack Web UI.
 
+## Converting Chirpstack Payload Decoders
+
+You can use JS-style Payload Decoders provided by a Device-profile template in Chirpstack. However, they must be adjusted so that the output of these decoders meets the expectations of LoRaWAN Listener. The decoder can be accessed via Chirpstack's UI Device Profiles > *Device Profile Name* > Codec.
+
+Mostly a Chirpstack Decoder looks like the following:
+
+```js
+/**
+ * Ursalink Sensor Payload Decoder
+ *
+ * definition [channel-id] [channel-type] [channel-data]
+ *
+ * 01: battery      -> 0x01 0x75 [1byte]  Unit: %
+ * 03: temperature  -> 0x03 0x67 [2bytes] Unit: °C
+ * ------------------------------------------ EM500-PT100
+ */
+function decodeUplink(input) {
+    var bytes = input['bytes'];
+    var decoded = {};
+
+    for (var i = 0; i < bytes.length;) {
+        var channel_id = bytes[i++];
+        var channel_type = bytes[i++];
+        // BATTERY
+        if (channel_id === 0x01 && channel_type === 0x75) {
+            decoded.battery = bytes[i];
+            i += 1;
+        }
+        // TEMPERATURE
+        else if (channel_id === 0x03 && channel_type === 0x67) {
+            decoded.temperature = readInt16LE(bytes.slice(i, i + 2)) / 10;
+            i += 2;
+        } else {
+            break;
+        }
+    }
+  return { data: decoded }
+}
+
+/* ******************************************
+ * bytes to number
+ ********************************************/
+function readUInt16LE(bytes) {
+    var value = (bytes[1] << 8) + bytes[0];
+    return value & 0xffff;
+}
+function readInt16LE(bytes) {
+    var ref = readUInt16LE(bytes);
+    return ref > 0x7fff ? ref - 0x10000 : ref;
+}
+```
+
+This Decoder returns the payload structured as follows:
+
+```
+payload = {
+    "temperature": 21.3,
+    "battery": 55
+}
+```
+
+LoraWAN listener expects this to be:
+
+```
+payload = {
+  measurements:[
+  {name:"temperature",value: 21.3},
+  {name:"battery",value: 55}
+  ]
+}
+```
+So instead of having a dictionary with a key:value-pair for every measurement value (like temperature, battery), LoraWAN Listener expects a `measurements` Array to be returned with a Dictionary for each value you would like to forward into the beehive. 
+
+Each Dictionary inside the `measurements` Array consists of 2 elements:
+1) The measurement name (field: "temperature")
+1) The actual value of that field (value: 21.3)
+
+Now let's convert this to LoRaWAN Listener:
+
+```js
+/**
+ * Ursalink Sensor Payload Decoder
+ *
+ * definition [channel-id] [channel-type] [channel-data]
+ *
+ * 01: battery      -> 0x01 0x75 [1byte]  Unit: %
+ * 03: temperature  -> 0x03 0x67 [2bytes] Unit: °C
+ * ------------------------------------------ EM500-PT100
+ */
+function decodeUplink(input) {
+    var bytes = input['bytes'];
+    //var decoded = {}; <-- decoded needs to have a measurement array so change this to:
+    var decoded = {
+      measurements:[]
+    }
+
+    for (var i = 0; i < bytes.length;) {
+        var channel_id = bytes[i++];
+        var channel_type = bytes[i++];
+        // BATTERY
+        if (channel_id === 0x01 && channel_type === 0x75) {
+          
+          //decoded.battery = bytes[i]; <-- Change this to:
+
+          decoded.measurements.push({
+            name: "battery",
+            value: bytes[i]
+          });
+
+          i += 1;
+
+        }
+        // TEMPERATURE
+        else if (channel_id === 0x03 && channel_type === 0x67) {
+            
+            //decoded.temperature = readInt16LE(bytes.slice(i, i + 2)) / 10; <--- Change this to:
+
+            decoded.measurements.push({
+              name: "temperature",
+              value: readInt16LE(bytes.slice(i, i + 2)) / 10
+            });
+
+            i += 2;
+
+        } else {
+            break;
+        }
+    }
+  return { data: decoded }
+}
+
+/* ******************************************
+ * bytes to number
+ ********************************************/
+function readUInt16LE(bytes) {
+    var value = (bytes[1] << 8) + bytes[0];
+    return value & 0xffff;
+}
+function readInt16LE(bytes) {
+    var ref = readUInt16LE(bytes);
+    return ref > 0x7fff ? ref - 0x10000 : ref;
+}
+```
+>For more information on Chirpstack's Payload Codecs see [Chirpstack Documentation](https://www.chirpstack.io/docs/chirpstack/use/device-profiles.html)
 ## Running lorawan-listener
 
 Once the prerequisites are completed, lorawan-listener can now run on the node. To run lorawan-listener on the node it must be scheduled using the [Edge Scheduler (ES)](https://docs.waggle-edge.ai/docs/about/architecture#edge-scheduler-es). There is a [walkthrough example](https://docs.waggle-edge.ai/docs/tutorials/schedule-jobs) on the Sage website under docs that can be followed. The lorawan-listener plugin can also be scheduled using the [Sage Portal's UI to create jobs](https://portal.sagecontinuum.org/create-job). An example of the job's yaml file is found below.
@@ -42,7 +197,7 @@ successCriteria:
 - WallClock('1day')
 ```
 
-Once the job is scheduled and the prerequisites are configured correctly, the node will receive data being sent by LoRaWan devices and publish it to the beehive under the measurement called `lorawan.data`.
+Once the job is scheduled and the prerequisites are configured correctly, the node will receive data being sent by LoRaWan devices and publish it to the beehive under the measurement name specified in the Device's Payload Decoder.
 
 ### Arguments
 
@@ -58,14 +213,12 @@ Once the job is scheduled and the prerequisites are configured correctly, the no
 
 ## Retrieving Published Data
 
-There are two recommended approaches to retrieving `lorawan.data`:
+There are two recommended approaches to retrieving LoRaWAN values:
 
 1) Subscribing to lorawan-listener plugin
 1) Using the Data API
 
-Each is appropriate for different use cases and integrations, but generally if your building an application that relies on `lorawan.data` then subcribe to the lorawan-listener plugin.
-
->IMPORTANT: All values published by lorawan-listener plugin is published as data type string.
+Each is appropriate for different use cases and integrations, but generally if your building an application that relies on LoRaWAN values then subcribe to the lorawan-listener plugin.
 
 ### Subscribing to lorawan-listener plugin
 
@@ -73,14 +226,14 @@ To subscribe to the lorawan-listener plugin, your plugin must be running on the 
 
 ### Using the Data API
 
-To learn how to use the Data API, refer to the [Using the Data API](https://sagecontinuum.org/docs/tutorials/accessing-data#using-the-data-api) resource. This example below shows how to retrieve LoRaWAN data using the HTTP API. Specifically, it retrieves data identified by the "lorawan.data" identifier, which was published by a LoRaWAN device called "Lozano LoRA E5 Mini" in the last 30 days.
+To learn how to use the Data API, refer to the [Using the Data API](https://sagecontinuum.org/docs/tutorials/accessing-data#using-the-data-api) resource. This example below shows how to retrieve LoRaWAN data using the HTTP API. Specifically, it retrieves the value identified by the "lorawan.temp" identifier, which was published by a LoRaWAN device called "Lozano LoRA E5 Mini" in the last 30 days.
 
 ```
 curl -H 'Content-Type: application/json' https://data.sagecontinuum.org/api/v1/query -d '
 {
     "start": "-30d",
     "filter": {
-         "name":"lorawan.data",
+         "name":"lorawan.temp",
          "deviceName": "Lozano LoRA E5 Mini"
     }
 }'
@@ -92,7 +245,7 @@ This section provides you with additional information that will help you when ex
 
 ## Metadata
 
-The examples provided are specific instances of metadata that are only published for the measurement `lorawan.data`.
+The examples provided are specific instances of metadata that is published by the plugin.
 
 - "Type_tag": "test device"
 - "applicationId": "5b06bc92-0510-47c1-8f24-a807f48b94a9"

@@ -1,19 +1,30 @@
-# About The Plugin
+## About The Plugin
 
-This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive data from LoRaWAN (Long Range Wide Area Network) devices. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
+This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
 
-When the plugin receives data from a LoRaWAN device, it publishes that data to the beehive. This is where all the data received from the LoRaWAN devices is stored. Other users can then subscribe to this measurement called *lorawan.data* to access the data, or use it to build larger applications that rely on LoRaWAN data.
+When the plugin receives data from a LoRaWAN device, it publishes that data to the beehive. This is where all the data received from the LoRaWAN devices is stored. Other users can then subscribe to the measurement(s) to access the data, or use it to build larger applications that rely on LoRaWAN data.
 
-To help users identify where the data came from, the plugin includes metadata when it publishes the data to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the data was collected.
+To help users identify where the value came from, the plugin includes metadata when it publishes the value to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the value was collected.
 
-This plugin currently only works in the US Region due to regulations in radio channels and [wes-chirpstack](https://github.com/waggle-sensor/waggle-edge-stack/tree/main/kubernetes/wes-chirpstack) being set up for US Region.
+The plugin expects the payload in the following format:
+```
+payload = {
+  measurements:[
+  {name:"<measurement name>",value:<measurement value>},
+  {name:"<measurement name>",value:<measurement value>}, ...
+  ]
+}
+```
+
+>IMPORTANT: This plugin currently only works in the US Region due to regulations in radio channels and [wes-chirpstack](https://github.com/waggle-sensor/waggle-edge-stack/tree/main/kubernetes/wes-chirpstack) being set up for US Region.
 
 # Using the code
 
 Before the plugin can work...
 1) [Rpi with RAK concentrator has to be discoverable by K3s Cluster](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md##setting-up-rak-discover-kit-2-to-be-discoverable-by-wes)
 1) [WES access to the RAK concentrator has to be enabled](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#enabling-wes-access-to-the-rak-concentrator)
-1) [LoRa End Device is activated via OTAA](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
+1) [LoRa End Device is activated](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
+1) [The Payload Conforms with LoRaWAN Listener](https://github.com/FranciscoLozCoding/plugin-lorawan-listener#converting-chirpstack-payload-decoders)
 
 For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggle-lorawan)
 
