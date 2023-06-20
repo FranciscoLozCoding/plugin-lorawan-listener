@@ -185,7 +185,7 @@ name: Lorawan_TestJob
 plugins:
 - name: lorawan-listener
   pluginSpec:
-    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.1
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.2
     selector:
       zone: core
 nodeTags: []
