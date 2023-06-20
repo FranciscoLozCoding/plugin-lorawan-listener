@@ -10,8 +10,8 @@ The plugin expects the payload in the following format:
 ```
 payload = {
   measurements:[
-  {name:"<measurement name>",value:<measurement value>},
-  {name:"<measurement name>",value:<measurement value>}, ...
+  {name:"measurement_name",value:measurement_value},
+  {name:"measurement_name",value:measurement_value}, ...
   ]
 }
 ```
