@@ -186,8 +186,6 @@ plugins:
 - name: lorawan-listener
   pluginSpec:
     image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.2
-    selector:
-      zone: core
 nodeTags: []
 nodes:
   W030: true
