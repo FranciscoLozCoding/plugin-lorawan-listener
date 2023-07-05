@@ -220,7 +220,7 @@ Each is appropriate for different use cases and integrations, but generally if y
 
 ### Subscribing to lorawan-listener plugin
 
-To subscribe to the lorawan-listener plugin, your plugin must be running on the same node as the lorawan-listener. You can refer to the [Subscribing to other measurements](https://github.com/waggle-sensor/pywaggle/blob/main/docs/writing-a-plugin.md#subscribing-to-other-measurements) resource to learn how to subscribe to measurements. Additionally, you can find an example of a plugin that uses the lorawan-listener plugin in this repository called [plugin-lorawan-example](https://github.com/waggle-sensor/plugin-lorawan-example).
+To subscribe to the lorawan-listener plugin, your plugin must be running on the same node as the lorawan-listener. You can refer to the [Subscribing to other measurements](https://github.com/waggle-sensor/pywaggle/blob/main/docs/writing-a-plugin.md#subscribing-to-other-measurements) resource to learn how to subscribe to measurements.
 
 ### Using the Data API
 
