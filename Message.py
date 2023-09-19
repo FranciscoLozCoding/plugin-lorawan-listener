@@ -3,6 +3,7 @@ import time
 from waggle.plugin import Plugin
 from parse import parse_message_payload
 from parse import clean_message_dict
+from parse import clean_message_measurement
 
 def on_message_publish(client, userdata, message):
 
@@ -22,6 +23,9 @@ def on_message_publish(client, userdata, message):
         return
     
     for measurement in measurements:
+
+        #clean measurement names
+        measurement = clean_message_measurement(measurement)
 
         with Plugin() as plugin: #publish lorawan data
             plugin.publish(measurement["name"], measurement["value"], timestamp=time.time_ns(), meta=metadata)
@@ -49,6 +53,9 @@ def log_message(message):
         return
     
     for measurement in measurements:
+
+        #clean measurement names
+        measurement = clean_message_measurement(measurement)
 
         logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
 

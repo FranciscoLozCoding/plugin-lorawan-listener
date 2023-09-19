@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 def parse_message_payload(payload_data):
 
@@ -37,3 +38,13 @@ def clean_message_dict(message_dict):
         pass
 
     return tmp_dict
+
+def clean_message_measurement(measurement):
+
+    #pattern excepted 
+    pattern = r'[^a-z0-9_]'
+
+    #replace not excepted values with '_' in measurement["name"]
+    measurement["name"] = re.sub(pattern, '_', measurement["name"])
+
+    return measurement
