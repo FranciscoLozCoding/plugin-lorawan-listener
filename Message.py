@@ -23,10 +23,6 @@ def on_message_publish(client, userdata, message,to_publish):
         return
     
     for measurement in measurements:
-
-        #clean measurement names
-        measurement = clean_message_measurement(measurement)
-
         if to_publish: #true if not empty
             if measurement["name"] in to_publish: #if not empty only publish measurements in list
                 publish(measurement,timestamp,metadata)
@@ -37,6 +33,9 @@ def on_message_publish(client, userdata, message,to_publish):
     return
 
 def publish(measurement,timestamp,metadata):
+
+    measurement = clean_message_measurement(measurement) #clean measurement names
+
     with Plugin() as plugin: #publish lorawan data
         try:
             plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
