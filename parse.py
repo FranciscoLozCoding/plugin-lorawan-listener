@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import time
 
 def parse_message_payload(payload_data):
 
@@ -48,3 +49,15 @@ def clean_message_measurement(measurement):
     measurement["name"] = re.sub(pattern, '_', measurement["name"])
 
     return measurement
+
+def convert_time(iso_time):
+    # Convert the timestamp string into a struct_time object
+    struct_time = time.strptime(iso_time, '%Y-%m-%dT%H:%M:%S.%f%z')
+
+    # Convert the struct_time object into seconds since the epoch
+    seconds_since_epoch = time.mktime(struct_time)
+
+    # Calculate nanoseconds since the epoch
+    nanoseconds_since_epoch = int(seconds_since_epoch * 1e9)
+
+    return nanoseconds_since_epoch
