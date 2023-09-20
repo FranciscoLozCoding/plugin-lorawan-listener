@@ -47,8 +47,6 @@ def main():
         datefmt="%Y/%m/%d %H:%M:%S",
     )
 
-    print("measurements: %r" % args.measurements)
-
     client = mqtt.Client("lorawan-test")
     logging.info(f"connecting [{args.mqtt_server_ip}:{args.mqtt_server_port}]...")
     client.connect(host=args.mqtt_server_ip, port=args.mqtt_server_port, bind_address="0.0.0.0")

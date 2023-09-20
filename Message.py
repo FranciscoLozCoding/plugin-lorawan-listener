@@ -4,7 +4,6 @@ from waggle.plugin import Plugin
 from parse import *
 
 def on_message_publish(client, userdata, message,to_publish):
-    print("measurements: %r" % to_publish)
     log_message(message) #log message
 
     try: #get metadata and measurements received
