@@ -38,3 +38,5 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 **--mqtt-server-port**: MQTT server port
 
 **--mqtt-subscribe-topic**: MQTT subscribe topic
+
+**--measurements**: A list of chirpstack measurement names to publish. If empty all will be published (ex: --measurements m1 m2 m3)

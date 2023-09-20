@@ -196,6 +196,29 @@ successCriteria:
 
 Once the job is scheduled and the prerequisites are configured correctly, the node will receive data being sent by LoRaWan devices and publish it to the beehive under the measurement name specified in the Device's Payload Decoder.
 
+### Another example
+
+This example takes advantage of the argument `--measurements` and only publishes measurements listed. All other measurements are ignored
+
+```
+name: Lorawan_TestJob
+plugins:
+- name: lorawan-listener
+  pluginSpec:
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.5
+    args: 
+    - --measurements
+    - soil_moisture
+    - battery-voltage
+nodeTags: []
+nodes:
+  W030: true
+scienceRules:
+- 'schedule("lorawan-listener"): cronjob("lorawan-listener", "* * * * *")'
+successCriteria:
+- WallClock('1day')
+```
+
 ### Arguments
 
 **--debug**: enable debug logs
@@ -207,6 +230,8 @@ Once the job is scheduled and the prerequisites are configured correctly, the no
 **--mqtt-server-port**: MQTT server port
 
 **--mqtt-subscribe-topic**: MQTT subscribe topic
+
+**--measurements**: A list of chirpstack measurement names to publish. If empty all will be published (ex: --measurements m1 m2 m3)
 
 ## Retrieving Published Data
 

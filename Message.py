@@ -3,8 +3,8 @@ import time
 from waggle.plugin import Plugin
 from parse import *
 
-def on_message_publish(client, userdata, message):
-
+def on_message_publish(client, userdata, message,to_publish):
+    print("measurements: %r" % to_publish)
     log_message(message) #log message
 
     try: #get metadata and measurements received
@@ -28,17 +28,26 @@ def on_message_publish(client, userdata, message):
         #clean measurement names
         measurement = clean_message_measurement(measurement)
 
-        with Plugin() as plugin: #publish lorawan data
-            try:
-                plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
+        if to_publish: #true if not empty
+            if measurement["name"] in to_publish: #if not empty only publish measurements in list
+                publish(measurement,timestamp,metadata)
+        else: #else to_publish is empty so publish all measurements
+            publish(measurement,timestamp,metadata)
 
-                # If the function succeeds, log a success message
-                logging.info('%s published', measurement["name"])
-            except Exception as e:
-                # If an exception is raised, log an error message
-                logging.error('measurement did not publish encountered an error: %s', str(e))
 
     return
+
+def publish(measurement,timestamp,metadata):
+    with Plugin() as plugin: #publish lorawan data
+        try:
+            plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
+
+            # If the function succeeds, log a success message
+            logging.info('%s published', measurement["name"])
+        except Exception as e:
+            # If an exception is raised, log an error message
+            logging.error('measurement did not publish encountered an error: %s', str(e))
+
 
 def on_message_dry(client, userdata, message):
 

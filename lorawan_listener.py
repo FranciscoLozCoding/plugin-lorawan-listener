@@ -32,6 +32,13 @@ def main():
         default=os.getenv("MQTT_SUBSCRIBE_TOPIC", "application/#"),
         help="MQTT subscribe topic",
     )
+    parser.add_argument(
+        "--measurements",
+        nargs="*",  # 0 or more values expected => creates a list
+        type=str,
+        default=[],  # default if nothing is provided
+        help="A list of chirpstack measurement names to publish. If empty all will be published (ex: --measurements m1 m2 m3)"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -40,13 +47,15 @@ def main():
         datefmt="%Y/%m/%d %H:%M:%S",
     )
 
+    print("measurements: %r" % args.measurements)
+
     client = mqtt.Client("lorawan-test")
     logging.info(f"connecting [{args.mqtt_server_ip}:{args.mqtt_server_port}]...")
     client.connect(host=args.mqtt_server_ip, port=args.mqtt_server_port, bind_address="0.0.0.0")
     logging.info(f"subscribing [{args.mqtt_subscribe_topic}]...")
     client.subscribe(args.mqtt_subscribe_topic)
     logging.info("waiting for callback...")
-    client.on_message = on_message_dry if args.dry else on_message_publish
+    client.on_message = on_message_dry if args.dry else lambda client, userdata, message: on_message_publish(client, userdata, message, args.measurements)
     client.loop_forever()
 
 
