@@ -1,7 +1,8 @@
 import json
 import logging
 import re
-import time
+import datetime
+from dateutil import parser
 
 def parse_message_payload(payload_data):
 
@@ -51,13 +52,14 @@ def clean_message_measurement(measurement):
     return measurement
 
 def convert_time(iso_time):
-    # Convert the timestamp string into a struct_time object
-    struct_time = time.strptime(iso_time, '%Y-%m-%dT%H:%M:%S.%f%z')
+    # Parse the timestamp string using dateutil.parser
+    try:
+        datetime_obj = parser.isoparse(iso_time)
+    except ValueError as e:
+        print(f"Error: {e}")
+    else:
+        # Convert the datetime object to nanoseconds since the epoch
+        total_seconds = datetime_obj.timestamp()
+        nanoseconds = int(total_seconds * 1e9)
 
-    # Convert the struct_time object into seconds since the epoch
-    seconds_since_epoch = time.mktime(struct_time)
-
-    # Calculate nanoseconds since the epoch
-    nanoseconds_since_epoch = int(seconds_since_epoch * 1e9)
-
-    return nanoseconds_since_epoch
+    return nanoseconds
