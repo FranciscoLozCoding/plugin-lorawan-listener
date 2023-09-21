@@ -2,9 +2,9 @@ import argparse
 import logging
 import os
 import paho.mqtt.client as mqtt
-from Message import on_message_publish
-from Message import on_message_dry
-from callbacks import *
+from .Message import on_message_publish
+from .Message import on_message_dry
+from .callbacks import *
 
 def main():
 
