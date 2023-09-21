@@ -32,7 +32,7 @@ def main():
         nargs="*",  # 0 or more values expected => creates a list
         type=str,
         default=[],  # default if nothing is provided
-        help="A list of chirpstack measurement names to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)"
+        help="A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)"
     )
     
     #get args

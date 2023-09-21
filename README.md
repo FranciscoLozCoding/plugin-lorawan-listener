@@ -184,7 +184,7 @@ name: Lorawan_TestJob
 plugins:
 - name: lorawan-listener
   pluginSpec:
-    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.5
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.6
 nodeTags: []
 nodes:
   W030: true
@@ -205,9 +205,9 @@ name: Lorawan_TestJob
 plugins:
 - name: lorawan-listener
   pluginSpec:
-    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.5
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.6
     args: 
-    - --measurements
+    - --collect
     - soil_moisture
     - battery-voltage
 nodeTags: []
@@ -231,7 +231,7 @@ successCriteria:
 
 **--mqtt-subscribe-topic**: MQTT subscribe topic
 
-**--measurements**: A list of chirpstack measurement names to publish. If empty all will be published (ex: --measurements m1 m2 m3)
+**--collect**: A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)
 
 ## Retrieving Published Data
 
