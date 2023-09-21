@@ -75,6 +75,7 @@ class My_Client:
 
         return
 
+    @staticmethod
     def publish(measurement,timestamp,metadata):
 
         measurement = clean_message_measurement(measurement) #clean measurement names
