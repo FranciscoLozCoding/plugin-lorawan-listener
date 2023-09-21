@@ -1,7 +1,7 @@
 import logging
 import time
 from waggle.plugin import Plugin
-from .parse import *
+from parse import *
 
 def on_message_publish(client, userdata, message,to_publish):
     log_message(message) #log message
