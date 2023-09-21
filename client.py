@@ -30,7 +30,7 @@ class My_Client:
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             logging.info("Connected to MQTT broker")
-            self.subscribe(self.args.mqtt_subscribe_topic)
+            client.subscribe(self.args.mqtt_subscribe_topic)
         else:
             logging.error(f"Connection to MQTT broker failed with code {rc}") 
         return
