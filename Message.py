@@ -75,6 +75,10 @@ def log_measurements(message):
     
     for measurement in measurements:
 
-        logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
+        if self.args.collect: #true if not empty
+            if measurement["name"] in self.args.collect: #if not empty only log measurements in list
+                logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
+        else: #else collect is empty so log all measurements
+                logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
 
     return

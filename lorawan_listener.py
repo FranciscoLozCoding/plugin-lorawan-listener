@@ -45,11 +45,11 @@ def main():
         help="MQTT subscribe topic",
     )
     parser.add_argument(
-        "--measurements",
+        "--collect",
         nargs="*",  # 0 or more values expected => creates a list
         type=str,
         default=[],  # default if nothing is provided
-        help="A list of chirpstack measurement names to publish. If empty all will be published (ex: --measurements m1 m2 m3)"
+        help="A list of chirpstack measurement names to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)"
     )
     args = parser.parse_args()
 
@@ -63,7 +63,7 @@ def main():
     client = mqtt.Client(generate_client_id())
     client.on_subscribe = on_subscribe
     client.on_connect = lambda client, userdata, flags, rc: on_connect(client, userdata, flags, rc, args.mqtt_subscribe_topic)
-    client.on_message = on_message_dry if args.dry else lambda client, userdata, message: on_message_publish(client, userdata, message, args.measurements)
+    client.on_message = on_message_dry if args.dry else lambda client, userdata, message: on_message_publish(client, userdata, message, args.collect)
     logging.info(f"connecting [{args.mqtt_server_ip}:{args.mqtt_server_port}]...")
     client.connect(host=args.mqtt_server_ip, port=args.mqtt_server_port, bind_address="0.0.0.0")
     logging.info("waiting for callback...")

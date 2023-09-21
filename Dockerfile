@@ -9,5 +9,6 @@ COPY lorawan_listener.py .
 COPY parse.py .
 COPY Message.py .
 COPY Callbacks.py .
+COPY client.py .
 
-ENTRYPOINT ["python3" , "lorawan_listener.py"]
+ENTRYPOINT ["python3" , "client.py"]
