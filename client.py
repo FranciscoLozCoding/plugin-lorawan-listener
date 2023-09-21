@@ -48,6 +48,7 @@ class My_Client:
         return
 
     def publish_message(self,client, userdata, message):
+        print("test")
         self.log_message(message) #log message
 
         try: #get metadata and measurements received
