@@ -49,14 +49,12 @@ def main():
 
     #configure client and connection
     client = mqtt.Client("lorawan-listener")
+    client.on_subscribe = on_subscribe
+    client.on_connect = on_connect
+    client.on_message = on_message_dry if args.dry else lambda client, userdata, message: on_message_publish(client, userdata, message, args.measurements)
     logging.info(f"connecting [{args.mqtt_server_ip}:{args.mqtt_server_port}]...")
     client.connect(host=args.mqtt_server_ip, port=args.mqtt_server_port, bind_address="0.0.0.0")
-    client.on_connect = on_connect
-    logging.info(f"subscribing [{args.mqtt_subscribe_topic}]...")
-    client.subscribe(args.mqtt_subscribe_topic)
-    client.on_subscribe = on_subscribe
     logging.info("waiting for callback...")
-    client.on_message = on_message_dry if args.dry else lambda client, userdata, message: on_message_publish(client, userdata, message, args.measurements)
     #enable reconnection: 
     # delay is the number of seconds to wait between successive reconnect attempts(default=1).
     # delay_max is the maximum number of seconds to wait between reconnection attempts(default=1)
