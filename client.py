@@ -47,7 +47,7 @@ class My_Client:
         return
 
     def publish_message(self,client, userdata, message):
-        log_message(message) #log message
+        self.log_message(message) #log message
 
         try: #get metadata and measurements received
             metadata = parse_message_payload(message.payload.decode("utf-8"))
@@ -90,6 +90,8 @@ class My_Client:
         return
 
     def dry_message(self, client, userdata, message):
+
+        print("test")
 
         self.log_message(message)
 
