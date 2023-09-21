@@ -18,7 +18,7 @@ class My_Client:
         client.on_subscribe = self.on_subscribe
         client.on_connect = self.on_connect
         client.reconnect_delay_set(min_delay=5, max_delay=60)
-        client.on_message = lambda client, userdata, message: self.dry_message if self.args.dry else lambda client, userdata, message: self.publish_message
+        client.on_message = lambda client, userdata, message: self.dry_message(client, userdata, message) if self.args.dry else lambda client, userdata, message: self.publish_message(client, userdata, message)
         client.on_log = self.on_log
         return client
 
