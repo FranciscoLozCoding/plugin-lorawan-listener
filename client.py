@@ -1,8 +1,6 @@
-import argparse
 import logging
 import os
 import paho.mqtt.client as mqtt
-import logging
 import time
 from waggle.plugin import Plugin
 from parse import *
@@ -17,6 +15,9 @@ class My_Client:
         client = mqtt.Client(client_id)
         client.on_subscribe = self.on_subscribe
         client.on_connect = self.on_connect
+        #reconnect_delay_set: 
+        # delay is the number of seconds to wait between successive reconnect attempts(default=1).
+        # delay_max is the maximum number of seconds to wait between reconnection attempts(default=1)
         client.reconnect_delay_set(min_delay=5, max_delay=60)
         client.on_message = lambda client, userdata, message: self.dry_message(client, userdata, message) if self.args.dry else lambda client, userdata, message: self.publish_message(client, userdata, message)
         client.on_log = self.on_log
@@ -43,7 +44,7 @@ class My_Client:
 
     @staticmethod
     def on_log(client, obj, level, string):
-        logging.debug(string)
+        logging.debug(string) #prints if args.debug = true
         return
 
     def publish_message(self,client, userdata, message):
