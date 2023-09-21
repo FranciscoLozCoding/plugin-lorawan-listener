@@ -15,7 +15,7 @@ class My_Client:
     def configure_client(self):
         client_id = self.generate_client_id()
         client = mqtt.Client(client_id)
-        client.on_subscribe = on_subscribe
+        client.on_subscribe = lambda client, obj, mid, granted_qos: self.on_subscribe
         client.on_connect = self.on_connect
         client.reconnect_delay_set(min_delay=5, max_delay=60)
         client.on_message = self.dry_message if self.args.dry else self.publish_message
@@ -35,7 +35,7 @@ class My_Client:
             logging.error(f"Connection to MQTT broker failed with code {rc}") 
         return
 
-    def on_subscribe(client, obj, mid, granted_qos):
+    def on_subscribe(self, client, obj, mid, granted_qos):
         logging.info("Subscribed: " + str(mid) + " " + str(granted_qos))
         return
 
