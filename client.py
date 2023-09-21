@@ -19,7 +19,10 @@ class My_Client:
         # delay is the number of seconds to wait between successive reconnect attempts(default=1).
         # delay_max is the maximum number of seconds to wait between reconnection attempts(default=1)
         client.reconnect_delay_set(min_delay=5, max_delay=60)
-        client.on_message = lambda client, userdata, message: self.publish_message(client, userdata, message)
+        if self.args.dry:
+            client.on_message = lambda client, userdata, message: self.dry_message(client, userdata, message)
+        else:
+            client.on_message = lambda client, userdata, message: self.publish_message(client, userdata, message)
         client.on_log = self.on_log
         return client
 
