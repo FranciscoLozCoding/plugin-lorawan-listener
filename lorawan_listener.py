@@ -50,7 +50,7 @@ def main():
     #configure client and connection
     client = mqtt.Client("lorawan-listener")
     client.on_subscribe = on_subscribe
-    client.on_connect = on_connect
+    client.on_connect = lambda client, userdata, flags, rc: on_connect(client, userdata, flags, rc, args.mqtt_subscribe_topic)
     client.on_message = on_message_dry if args.dry else lambda client, userdata, message: on_message_publish(client, userdata, message, args.measurements)
     logging.info(f"connecting [{args.mqtt_server_ip}:{args.mqtt_server_port}]...")
     client.connect(host=args.mqtt_server_ip, port=args.mqtt_server_port, bind_address="0.0.0.0")
