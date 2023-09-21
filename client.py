@@ -15,14 +15,15 @@ class My_Client:
     def configure_client(self):
         client_id = self.generate_client_id()
         client = mqtt.Client(client_id)
-        client.on_subscribe = lambda client, obj, mid, granted_qos: self.on_subscribe
+        client.on_subscribe = self.on_subscribe
         client.on_connect = self.on_connect
         client.reconnect_delay_set(min_delay=5, max_delay=60)
-        client.on_message = self.dry_message if self.args.dry else self.publish_message
+        client.on_message = lambda client, userdata, message: self.dry_message if self.args.dry else lambda client, userdata, message: self.publish_message
         client.on_log = self.on_log
         return client
 
-    def generate_client_id(self):
+    @staticmethod
+    def generate_client_id():
         hostname = os.uname().nodename
         process_id = os.getpid()
         return f"{hostname}-{process_id}"
@@ -35,10 +36,12 @@ class My_Client:
             logging.error(f"Connection to MQTT broker failed with code {rc}") 
         return
 
-    def on_subscribe(self, client, obj, mid, granted_qos):
+    @staticmethod
+    def on_subscribe(client, obj, mid, granted_qos):
         logging.info("Subscribed: " + str(mid) + " " + str(granted_qos))
         return
 
+    @staticmethod
     def on_log(client, obj, level, string):
         logging.debug(string)
         return
@@ -86,7 +89,7 @@ class My_Client:
                 logging.error('measurement did not publish encountered an error: %s', str(e))
         return
 
-    def dry_message(client, userdata, message):
+    def dry_message(self, client, userdata, message):
 
         self.log_message(message)
 
@@ -94,6 +97,7 @@ class My_Client:
 
         return
 
+    @staticmethod
     def log_message(message):
             
         data = (
