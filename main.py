@@ -35,14 +35,15 @@ def main():
         help="A list of chirpstack measurement names to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)"
     )
     
+    #get args
+    args = parser.parse_args()
+
+    #configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.INFO,
         format="%(asctime)s %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
     )
-
-    #get args
-    args = parser.parse_args()
 
     #configure client
     mqtt_client = My_Client(args)
