@@ -91,8 +91,6 @@ class My_Client:
 
     def dry_message(self, client, userdata, message):
 
-        print("test")
-
         self.log_message(message)
 
         self.log_measurements(message)
