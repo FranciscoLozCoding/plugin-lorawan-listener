@@ -1,5 +1,6 @@
 import logging
 import argparse
+from client import *
 
 def main():
     parser = argparse.ArgumentParser()
