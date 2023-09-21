@@ -6,6 +6,18 @@ from Message import on_message_publish
 from Message import on_message_dry
 from Callbacks import *
 
+def generate_client_id():
+    # Get the container's hostname
+    hostname = os.uname().nodename
+    
+    # Generate a unique identifier within the container (e.g., using process ID)
+    process_id = os.getpid()
+    
+    # Combine the hostname and process ID to create a unique client ID
+    client_id = f"{hostname}-{process_id}"
+    
+    return client_id
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -48,7 +60,7 @@ def main():
     )
 
     #configure client and connection
-    client = mqtt.Client("lorawan-listener")
+    client = mqtt.Client(generate_client_id())
     client.on_subscribe = on_subscribe
     client.on_connect = lambda client, userdata, flags, rc: on_connect(client, userdata, flags, rc, args.mqtt_subscribe_topic)
     client.on_message = on_message_dry if args.dry else lambda client, userdata, message: on_message_publish(client, userdata, message, args.measurements)
