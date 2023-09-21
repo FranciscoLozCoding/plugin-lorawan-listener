@@ -8,5 +8,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY lorawan_listener.py .
 COPY parse.py .
 COPY Message.py .
+COPY Callbacks.py .
 
 ENTRYPOINT ["python3" , "lorawan_listener.py"]
