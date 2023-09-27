@@ -10,7 +10,7 @@ def parse_message_payload(payload_data):
 
     return tmp_dict
 
-def clean_message_dict(message_dict):
+def Get_Measurement_metadata(message_dict):
     tmp_dict = {}
 
     #Get static metadata
@@ -50,6 +50,51 @@ def clean_message_measurement(measurement):
     measurement["name"] = re.sub(pattern, '_', measurement["name"])
 
     return measurement
+
+def Get_Lorawan_Performance_values(message_dict):
+    tmp_dict = {}
+
+    #Get Lorawan Performance values
+    tmp_dict['rxInfo'] = []
+    try:
+        for val in message_dict['rxInfo']:
+            temp = {"gatewayId":val['gatewayId'],"rssi":val['rssi'],"snr":val['snr']}
+            tmp_dict['rxInfo'].append(temp)
+    except:
+        logging.error("rxInfo was not found")
+        raise ValueError("rxInfo was not found")
+
+    txInfo_dict = message_dict.pop('txInfo', None)
+    try:
+        tmp_dict['spreadingFactor'] = txInfo_dict['modulation']["lora"]["spreadingFactor"]
+    except:
+        logging.error("spreadingFactor was not found")
+        raise ValueError("spreadingFactor was not found")
+
+    return tmp_dict
+
+def Get_Lorawan_Performance_metadata(message_dict):
+    tmp_dict = {}
+
+    #get values from nested dictionary
+    deviceInfo_dict = message_dict.pop('deviceInfo', None)
+    try:
+        tmp_dict['deviceName'] = deviceInfo_dict['deviceName']
+        tmp_dict['devEui'] = deviceInfo_dict['devEui']
+    except:
+        logging.error("deviceInfo was not found")
+        raise ValueError("deviceInfo was not found")
+
+    #get tags
+    tags_dict = deviceInfo_dict.pop('tags', None)
+    try:
+        for key, value in tags_dict.items():
+            tmp_dict[key + "_tag"] = value
+    except:
+        pass
+
+    return tmp_dict
+
 
 def convert_time(iso_time):
     # Parse the timestamp string using dateutil.parser

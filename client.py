@@ -51,7 +51,6 @@ class My_Client:
         return
 
     def publish_message(self, client, userdata, message):
-        print("test")
         self.log_message(message) #log message
 
         try: #get metadata and measurements received
@@ -64,9 +63,9 @@ class My_Client:
         #get chirpstack time and convert to time in nanoseconds
         timestamp = convert_time(metadata["time"])
 
-        #remove dynamic metadata
+        #remove measurement metadata
         try:
-            metadata = clean_message_dict(metadata)
+            metadata = Get_Measurement_metadata(metadata)
         except:
             return
         
@@ -121,6 +120,9 @@ class My_Client:
         except:
             logging.error("Message did not contain measurements.")
             return
+
+        Performance_vals = Get_Lorawan_Performance_values(metadata)
+        Performance_metadata = Get_Lorawan_Performance_metadata(metadata) #remove from log once you have tested it
         
         for measurement in measurements:
 
@@ -129,6 +131,12 @@ class My_Client:
                     logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
             else: #else collect is empty so log all measurements
                     logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
+
+        for val in Performance_vals['rxInfo']:
+            logging.info("gatewayId: " + str(val["gatewayId"]))
+            logging.info("  rssi: " + str(val["rssi"]))
+            logging.info("  snr: " + str(val["snr"]))
+            logging.info("metadata: " + Performance_metadata) #remove from log once you have tested it
 
         return
 
