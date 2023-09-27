@@ -136,7 +136,7 @@ class My_Client:
             logging.info("gatewayId: " + str(val["gatewayId"]))
             logging.info("  rssi: " + str(val["rssi"]))
             logging.info("  snr: " + str(val["snr"]))
-            logging.info("metadata: " + Performance_metadata) #remove from log once you have tested it
+            logging.info(Performance_metadata) #remove from log once you have tested it
 
         return
 
