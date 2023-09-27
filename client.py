@@ -81,11 +81,11 @@ class My_Client:
                 self.publish(measurement,timestamp,Measurement_metadata)
 
         with Plugin() as plugin:
-            plugin.publish("spreadingfactor", Performance_vals["spreadingfactor"], timestamp=timestamp, meta=Performance_metadata) #snr does not depend on gateway
+            plugin.publish("signal.spreadingfactor", Performance_vals["spreadingfactor"], timestamp=timestamp, meta=Performance_metadata) #snr does not depend on gateway
             for val in Performance_vals['rxInfo']:
                 Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
-                plugin.publish("rssi", val["rssi"], timestamp=timestamp, meta=Performance_metadata)
-                plugin.publish("snr", val["snr"], timestamp=timestamp, meta=Performance_metadata)
+                plugin.publish("signal.rssi", val["rssi"], timestamp=timestamp, meta=Performance_metadata)
+                plugin.publish("signal.snr", val["snr"], timestamp=timestamp, meta=Performance_metadata)
 
         return
 
