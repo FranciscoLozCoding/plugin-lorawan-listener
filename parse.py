@@ -66,7 +66,7 @@ def Get_Signal_Performance_values(message_dict):
 
     txInfo_dict = message_dict.get('txInfo', None)
     try:
-        tmp_dict['spreadingFactor'] = txInfo_dict['modulation']["lora"]["spreadingFactor"]
+        tmp_dict['spreadingfactor'] = txInfo_dict['modulation']["lora"]["spreadingFactor"]
     except:
         logging.error("spreadingFactor was not found")
         raise ValueError("spreadingFactor was not found")
