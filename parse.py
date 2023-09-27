@@ -14,10 +14,10 @@ def Get_Measurement_metadata(message_dict):
     tmp_dict = {}
 
     #Get static metadata
-    tmp_dict['devAddr'] = message_dict.pop('devAddr', None)
+    tmp_dict['devAddr'] = message_dict.get('devAddr', None)
 
     #get values from nested dictionary
-    deviceInfo_dict = message_dict.pop('deviceInfo', None)
+    deviceInfo_dict = message_dict.get('deviceInfo', None)
     try:
         tmp_dict['tenantId'] = deviceInfo_dict['tenantId']
         tmp_dict['tenantName'] = deviceInfo_dict['tenantName']
@@ -32,7 +32,7 @@ def Get_Measurement_metadata(message_dict):
         raise ValueError("deviceInfo was not found")
 
     #get tags
-    tags_dict = deviceInfo_dict.pop('tags', None)
+    tags_dict = deviceInfo_dict.get('tags', None)
     try:
         for key, value in tags_dict.items():
             tmp_dict[key + "_tag"] = value
@@ -64,7 +64,7 @@ def Get_Signal_Performance_values(message_dict):
         logging.error("rxInfo was not found")
         raise ValueError("rxInfo was not found")
 
-    txInfo_dict = message_dict.pop('txInfo', None)
+    txInfo_dict = message_dict.get('txInfo', None)
     try:
         tmp_dict['spreadingFactor'] = txInfo_dict['modulation']["lora"]["spreadingFactor"]
     except:
@@ -77,7 +77,7 @@ def Get_Signal_Performance_metadata(message_dict):
     tmp_dict = {}
 
     #get values from nested dictionary
-    deviceInfo_dict = message_dict.pop('deviceInfo', None)
+    deviceInfo_dict = message_dict.get('deviceInfo', None)
     try:
         tmp_dict['deviceName'] = deviceInfo_dict['deviceName']
         tmp_dict['devEui'] = deviceInfo_dict['devEui']
@@ -86,7 +86,7 @@ def Get_Signal_Performance_metadata(message_dict):
         raise ValueError("deviceInfo was not found")
 
     #get tags
-    tags_dict = deviceInfo_dict.pop('tags', None)
+    tags_dict = deviceInfo_dict.get('tags', None)
     try:
         for key, value in tags_dict.items():
             tmp_dict[key + "_tag"] = value

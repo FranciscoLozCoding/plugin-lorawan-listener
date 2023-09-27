@@ -69,22 +69,22 @@ class My_Client:
 
         #remove measurement metadata
         try:
-            metadata = Get_Measurement_metadata(metadata)
+            Measurement_metadata = Get_Measurement_metadata(metadata)
         except:
             return
         
         for measurement in measurements:
             if self.args.collect: #true if not empty
                 if measurement["name"] in self.args.collect: #if not empty only publish measurements in list
-                    self.publish(measurement,timestamp,metadata)
+                    self.publish(measurement,timestamp,Measurement_metadata)
             else: #else collect is empty so publish all measurements
-                self.publish(measurement,timestamp,metadata)
+                self.publish(measurement,timestamp,Measurement_metadata)
 
         self.publish(Performance_vals["spreadingFactor"],timestamp,Performance_metadata) #snr does not depend on gateway
         for val in Performance_vals['rxInfo']:
             Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
-            plugin.publish("rssi", val["rssi"], timestamp=timestamp, meta=metadata)
-            plugin.publish("snr", val["snr"], timestamp=timestamp, meta=metadata)
+            plugin.publish("rssi", val["rssi"], timestamp=timestamp, meta=Performance_metadata)
+            plugin.publish("snr", val["snr"], timestamp=timestamp, meta=Performance_metadata)
 
         return
 
