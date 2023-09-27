@@ -184,7 +184,7 @@ name: Lorawan_TestJob
 plugins:
 - name: lorawan-listener
   pluginSpec:
-    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.6
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:#.#.# <--- version number
 nodeTags: []
 nodes:
   W030: true
@@ -205,7 +205,7 @@ name: Lorawan_TestJob
 plugins:
 - name: lorawan-listener
   pluginSpec:
-    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.6
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:#.#.# <--- version number
     args: 
     - --collect
     - soil_moisture
