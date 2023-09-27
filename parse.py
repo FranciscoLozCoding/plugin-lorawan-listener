@@ -43,6 +43,9 @@ def Get_Measurement_metadata(message_dict):
 
 def clean_message_measurement(measurement):
 
+    #convert capital letters to lowercase
+    measurement["name"] = measurement["name"].lower()
+
     #pattern excepted 
     pattern = r'[^a-z0-9_]'
 
