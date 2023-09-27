@@ -63,6 +63,10 @@ class My_Client:
         #get chirpstack time and convert to time in nanoseconds
         timestamp = convert_time(metadata["time"])
 
+        #Get Lorawan signal performance vals
+        Performance_vals = Get_Signal_Performance_values(metadata)
+        Performance_metadata = Get_Signal_Performance_metadata(metadata) 
+
         #remove measurement metadata
         try:
             metadata = Get_Measurement_metadata(metadata)
@@ -75,6 +79,12 @@ class My_Client:
                     self.publish(measurement,timestamp,metadata)
             else: #else collect is empty so publish all measurements
                 self.publish(measurement,timestamp,metadata)
+
+        self.publish(Performance_vals["spreadingFactor"],timestamp,Performance_metadata) #snr does not depend on gateway
+        for val in Performance_vals['rxInfo']:
+            Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
+            self.publish(val["rssi"],timestamp,Performance_metadata)
+            self.publish(val["snr"],timestamp,Performance_metadata)
 
         return
 
@@ -121,8 +131,7 @@ class My_Client:
             logging.error("Message did not contain measurements.")
             return
 
-        Performance_vals = Get_Lorawan_Performance_values(metadata)
-        Performance_metadata = Get_Lorawan_Performance_metadata(metadata) #remove from log once you have tested it
+        Performance_vals = Get_Signal_Performance_values(metadata)
         
         for measurement in measurements:
 
@@ -136,8 +145,6 @@ class My_Client:
             logging.info("gatewayId: " + str(val["gatewayId"]))
             logging.info("  rssi: " + str(val["rssi"]))
             logging.info("  snr: " + str(val["snr"]))
-            Performance_metadata['gatewayId'] = val["gatewayId"] #remove from log once you have tested it
-            logging.info(Performance_metadata) #remove from log once you have tested it
         logging.info("spreading factor: " + str(Performance_vals["spreadingFactor"]))
 
         return

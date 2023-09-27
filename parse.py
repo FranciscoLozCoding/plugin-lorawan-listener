@@ -51,7 +51,7 @@ def clean_message_measurement(measurement):
 
     return measurement
 
-def Get_Lorawan_Performance_values(message_dict):
+def Get_Signal_Performance_values(message_dict):
     tmp_dict = {}
 
     #Get Lorawan Performance values
@@ -73,7 +73,7 @@ def Get_Lorawan_Performance_values(message_dict):
 
     return tmp_dict
 
-def Get_Lorawan_Performance_metadata(message_dict):
+def Get_Signal_Performance_metadata(message_dict):
     tmp_dict = {}
 
     #get values from nested dictionary
