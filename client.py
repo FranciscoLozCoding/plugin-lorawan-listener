@@ -80,7 +80,7 @@ class My_Client:
             else: #else collect is empty so publish all measurements
                 self.publish(measurement,timestamp,Measurement_metadata)
 
-        self.publish(Performance_vals["spreadingFactor"],timestamp,Performance_metadata) #snr does not depend on gateway
+        plugin.publish("spreadingFactor", Performance_vals["spreadingFactor"], timestamp=timestamp, meta=Performance_metadata) #snr does not depend on gateway
         for val in Performance_vals['rxInfo']:
             Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
             plugin.publish("rssi", val["rssi"], timestamp=timestamp, meta=Performance_metadata)
