@@ -6,7 +6,7 @@ When the plugin receives data from a LoRaWAN device, it publishes that data to t
 
 To help users identify where the value came from, the plugin includes metadata when it publishes the value to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the value was collected.
 
-Along with the measurements the plugin will also publish signal strength indicators to help users determine the strength of the wireless connection. The indicators published are as follows with links for more information on the indicator.
+If enabled, along with the measurements the plugin will also publish signal strength indicators to help users determine the strength of the wireless connection. The indicators published are as follows with links for more information on the indicator.
 
 - [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
 - [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
@@ -47,4 +47,4 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--collect**: A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)
 
-**--no-signal-strength-indicators**: disable signal strength indicators
+**--signal-strength-indicators**: enable signal strength indicators
