@@ -6,6 +6,12 @@ When the plugin receives data from a LoRaWAN device, it publishes that data to t
 
 To help users identify where the value came from, the plugin includes metadata when it publishes the value to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the value was collected.
 
+Along with the measurements the plugin will also publish signal strength indicators to help users determine the strength of the wireless connection. The indicators published are as follows with links for more information on the indicator.
+
+- [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
+- [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
+- [Spreading Factor](https://www.thethingsnetwork.org/docs/lorawan/spreading-factors/)
+
 The plugin expects the payload in the following format:
 ```
 payload = {
