@@ -46,3 +46,5 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 **--mqtt-subscribe-topic**: MQTT subscribe topic
 
 **--collect**: A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)
+
+**--no-signal-strength-indicators**: disable signal strength indicators
