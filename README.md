@@ -265,6 +265,14 @@ curl -H 'Content-Type: application/json' https://data.sagecontinuum.org/api/v1/q
 
 This section provides you with additional information that will help you when exploring the lorawan-listener plugin.
 
+## Signal Measurements
+
+Along with the measurements the lorawan-listener plugin will also publish signal strength indicators to help users determine the strength of the wireless connection. The indicators published are as follows with links for more information on the indicator.
+
+- [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
+- [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
+- [Spreading Factor](https://www.thethingsnetwork.org/docs/lorawan/spreading-factors/)
+
 ## Metadata
 
 The examples provided are specific instances of metadata that is published by the plugin.
