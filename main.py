@@ -34,6 +34,12 @@ def main():
         default=[],  # default if nothing is provided
         help="A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)"
     )
+    parser.add_argument(
+        "--signal-strength-indicators",
+        action="store_true",
+        default=False,
+        help="enable signal strength indicators"
+    )
     
     #get args
     args = parser.parse_args()

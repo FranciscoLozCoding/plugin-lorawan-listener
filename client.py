@@ -64,8 +64,9 @@ class My_Client:
         timestamp = convert_time(metadata["time"])
 
         #Get Lorawan signal performance vals
-        Performance_vals = Get_Signal_Performance_values(metadata)
-        Performance_metadata = Get_Signal_Performance_metadata(metadata) 
+        if self.args.signal_strength_indicators:
+            Performance_vals = Get_Signal_Performance_values(metadata)
+            Performance_metadata = Get_Signal_Performance_metadata(metadata) 
 
         #remove measurement metadata
         try:
@@ -80,12 +81,13 @@ class My_Client:
             else: #else collect is empty so publish all measurements
                 self.publish(measurement,timestamp,Measurement_metadata)
 
-        with Plugin() as plugin:
-            plugin.publish("signal.spreadingfactor", Performance_vals["spreadingfactor"], timestamp=timestamp, meta=Performance_metadata) #snr does not depend on gateway
-            for val in Performance_vals['rxInfo']:
-                Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
-                plugin.publish("signal.rssi", val["rssi"], timestamp=timestamp, meta=Performance_metadata)
-                plugin.publish("signal.snr", val["snr"], timestamp=timestamp, meta=Performance_metadata)
+        if self.args.signal_strength_indicators:
+            with Plugin() as plugin:
+                plugin.publish("signal.spreadingfactor", Performance_vals["spreadingfactor"], timestamp=timestamp, meta=Performance_metadata) #snr does not depend on gateway
+                for val in Performance_vals['rxInfo']:
+                    Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
+                    plugin.publish("signal.rssi", val["rssi"], timestamp=timestamp, meta=Performance_metadata)
+                    plugin.publish("signal.snr", val["snr"], timestamp=timestamp, meta=Performance_metadata)
 
         return
 
@@ -132,7 +134,8 @@ class My_Client:
             logging.error("Message did not contain measurements.")
             return
 
-        Performance_vals = Get_Signal_Performance_values(metadata)
+        if self.args.signal_strength_indicators:
+            Performance_vals = Get_Signal_Performance_values(metadata)
         
         for measurement in measurements:
 
@@ -142,11 +145,12 @@ class My_Client:
             else: #else collect is empty so log all measurements
                     logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
 
-        for val in Performance_vals['rxInfo']:
-            logging.info("gatewayId: " + str(val["gatewayId"]))
-            logging.info("  rssi: " + str(val["rssi"]))
-            logging.info("  snr: " + str(val["snr"]))
-        logging.info("spreading factor: " + str(Performance_vals["spreadingFactor"]))
+        if self.args.signal_strength_indicators:
+            for val in Performance_vals['rxInfo']:
+                logging.info("gatewayId: " + str(val["gatewayId"]))
+                logging.info("  rssi: " + str(val["rssi"]))
+                logging.info("  snr: " + str(val["snr"]))
+            logging.info("spreading factor: " + str(Performance_vals["spreadingFactor"]))
 
         return
 
