@@ -43,16 +43,22 @@ def Get_Measurement_metadata(message_dict):
 
 def clean_message_measurement(measurement):
 
+    #clean name
+    measurement["name"] = clean_string(measurement["name"])
+
+    return measurement
+
+def clean_string(txt):
     #convert capital letters to lowercase
-    measurement["name"] = measurement["name"].lower()
+    txt = txt.lower()
 
     #pattern excepted 
     pattern = r'[^a-z0-9_]'
 
-    #replace not excepted values with '_' in measurement["name"]
-    measurement["name"] = re.sub(pattern, '_', measurement["name"])
+    #replace not excepted values with '_' in txt
+    txt = re.sub(pattern, '_', txt)
 
-    return measurement
+    return txt
 
 def Get_Signal_Performance_values(message_dict):
     tmp_dict = {}
@@ -92,6 +98,7 @@ def Get_Signal_Performance_metadata(message_dict):
     tags_dict = deviceInfo_dict.get('tags', None)
     try:
         for key, value in tags_dict.items():
+            key = clean_string(key)
             tmp_dict[key + "_tag"] = value
     except:
         pass
