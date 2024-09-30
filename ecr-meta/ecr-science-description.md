@@ -47,4 +47,6 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--collect**: A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)
 
+**--ignore**: (opposite of --collect) A list of chirpstack measurements to ignore. If empty all will be retrieved (ex: --ignore m1 m2 m3)
+
 **--signal-strength-indicators**: enable signal strength indicators

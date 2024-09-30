@@ -198,7 +198,7 @@ Once the job is scheduled and the prerequisites are configured correctly, the no
 
 ### Another example
 
-This example takes advantage of the argument `--measurements` and only publishes measurements listed. All other measurements are ignored
+This example takes advantage of the argument `--collect` and only publishes measurements listed. All other measurements are ignored
 
 ```
 name: Lorawan_TestJob
@@ -232,6 +232,8 @@ successCriteria:
 **--mqtt-subscribe-topic**: MQTT subscribe topic
 
 **--collect**: A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)
+
+**--ignore**: (opposite of --collect) A list of chirpstack measurements to ignore. If empty all will be retrieved (ex: --ignore m1 m2 m3)
 
 **--signal-strength-indicators**: enable signal strength indicators
 

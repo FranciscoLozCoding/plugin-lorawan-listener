@@ -35,6 +35,13 @@ def main():
         help="A list of chirpstack measurements to retrieve. If empty all will be retrieved (ex: --collect m1 m2 m3)"
     )
     parser.add_argument(
+        "--ignore",
+        nargs="*",  # 0 or more values expected => creates a list
+        type=str,
+        default=[],  # default if nothing is provided
+        help="A list of chirpstack measurements to ignore (opposite of --collect). If empty all will be retrieved (ex: --ignore m1 m2 m3)"
+    )
+    parser.add_argument(
         "--signal-strength-indicators",
         action="store_true",
         default=False,
