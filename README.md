@@ -198,7 +198,7 @@ Once the job is scheduled and the prerequisites are configured correctly, the no
 
 ### Another example
 
-This example takes advantage of the argument `--measurements` and only publishes measurements listed. All other measurements are ignored
+This example takes advantage of the argument `--collect` and only publishes measurements listed. All other measurements are ignored
 
 ```
 name: Lorawan_TestJob
