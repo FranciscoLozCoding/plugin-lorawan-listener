@@ -75,6 +75,9 @@ class My_Client:
             return
         
         for measurement in measurements:
+            # Skip the measurement if it's in the ignore list
+            if measurement["name"] in self.args.ignore:
+                continue
             if self.args.collect: #true if not empty
                 if measurement["name"] in self.args.collect: #if not empty only publish measurements in list
                     self.publish(measurement,timestamp,Measurement_metadata)
@@ -138,7 +141,9 @@ class My_Client:
             Performance_vals = Get_Signal_Performance_values(metadata)
         
         for measurement in measurements:
-
+            # Skip the measurement if it's in the ignore list
+            if measurement["name"] in self.args.ignore:
+                continue
             if self.args.collect: #true if not empty
                 if measurement["name"] in self.args.collect: #if not empty only log measurements in list
                     logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
