@@ -29,7 +29,6 @@ def Get_Measurement_metadata(message_dict):
         tmp_dict['devEui'] = deviceInfo_dict['devEui']
     except:
         logging.error("deviceInfo was not found")
-        raise ValueError("deviceInfo was not found")
 
     #get tags
     tags_dict = deviceInfo_dict.get('tags', None)
@@ -65,20 +64,24 @@ def Get_Signal_Performance_values(message_dict):
 
     #Get Lorawan Performance values
     tmp_dict['rxInfo'] = []
-    try:
+    if 'rxInfo' in message_dict:
         for val in message_dict['rxInfo']:
             temp = {"gatewayId":val['gatewayId'],"rssi":val['rssi'],"snr":val['snr']}
             tmp_dict['rxInfo'].append(temp)
-    except:
+    else:
         logging.error("rxInfo was not found")
-        raise ValueError("rxInfo was not found")
 
     txInfo_dict = message_dict.get('txInfo', None)
-    try:
-        tmp_dict['spreadingfactor'] = txInfo_dict['modulation']["lora"]["spreadingFactor"]
-    except:
+    if (
+        txInfo_dict
+        and 'modulation' in txInfo_dict
+        and 'lora' in txInfo_dict['modulation']
+        and 'spreadingFactor' in txInfo_dict['modulation']['lora']
+    ):
+        tmp_dict['spreadingfactor'] = txInfo_dict['modulation']['lora']['spreadingFactor']
+    else:
+        tmp_dict['spreadingfactor'] = None
         logging.error("spreadingFactor was not found")
-        raise ValueError("spreadingFactor was not found")
 
     return tmp_dict
 
@@ -92,7 +95,6 @@ def Get_Signal_Performance_metadata(message_dict):
         tmp_dict['devEui'] = deviceInfo_dict['devEui']
     except:
         logging.error("deviceInfo was not found")
-        raise ValueError("deviceInfo was not found")
 
     #get tags
     tags_dict = deviceInfo_dict.get('tags', None)
@@ -111,7 +113,7 @@ def convert_time(iso_time):
     try:
         datetime_obj = parser.isoparse(iso_time)
     except ValueError as e:
-        print(f"Error: {e}")
+        logging.error(f"Error: {e}")
     else:
         # Convert the datetime object to nanoseconds since the epoch
         total_seconds = datetime_obj.timestamp()
