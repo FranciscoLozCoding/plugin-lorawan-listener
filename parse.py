@@ -66,7 +66,11 @@ def Get_Signal_Performance_values(message_dict):
     tmp_dict['rxInfo'] = []
     if 'rxInfo' in message_dict:
         for val in message_dict['rxInfo']:
-            temp = {"gatewayId":val['gatewayId'],"rssi":val['rssi'],"snr":val['snr']}
+            temp = {
+                "gatewayId": val.get('gatewayId', None),
+                "rssi": val.get('rssi', None),
+                "snr": val.get('snr', None)
+            }
             tmp_dict['rxInfo'].append(temp)
     else:
         logging.error("rxInfo was not found")
