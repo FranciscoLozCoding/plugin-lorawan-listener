@@ -80,24 +80,32 @@ class My_Client:
                 continue
             if self.args.collect: #true if not empty
                 if measurement["name"] in self.args.collect: #if not empty only publish measurements in list
-                    self.publish(measurement,timestamp,Measurement_metadata)
+                    self.publish_measurement(measurement,timestamp,Measurement_metadata)
             else: #else collect is empty so publish all measurements
-                self.publish(measurement,timestamp,Measurement_metadata)
+                self.publish_measurement(measurement,timestamp,Measurement_metadata)
 
         if self.args.signal_strength_indicators:
             #snr does not depend on gateway
-            self.publish(measurement={"name": "signal.spreadingfactor","value": Performance_vals["spreadingfactor"]},timestamp=timestamp, metadata=Performance_metadata)
+            self.publish_signal(measurement={"name": "signal.spreadingfactor","value": Performance_vals["spreadingfactor"]},timestamp=timestamp, metadata=Performance_metadata)
             for val in Performance_vals['rxInfo']:
                 Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
-                self.publish(measurement={"name": "signal.rssi","value": val["rssi"]},timestamp=timestamp, metadata=Performance_metadata)
-                self.publish(measurement={"name": "signal.snr","value": val["snr"]},timestamp=timestamp, metadata=Performance_metadata)
+                self.publish_signal(measurement={"name": "signal.rssi","value": val["rssi"]},timestamp=timestamp, metadata=Performance_metadata)
+                self.publish_signal(measurement={"name": "signal.snr","value": val["snr"]},timestamp=timestamp, metadata=Performance_metadata)
 
+        return
+    
+
+    def publish_signal(self, measurement,timestamp,metadata):
+        self.publish(measurement,timestamp,metadata)
+        return
+    
+    def publish_measurement(self, measurement,timestamp,metadata):
+        measurement = clean_message_measurement(measurement) #clean measurement names
+        self.publish(measurement,timestamp,metadata)
         return
 
     @staticmethod
     def publish(measurement,timestamp,metadata):
-
-        measurement = clean_message_measurement(measurement) #clean measurement names
 
         with Plugin() as plugin: #publish lorawan data
             try:
