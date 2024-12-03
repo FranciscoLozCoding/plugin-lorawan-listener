@@ -15,6 +15,7 @@ class PacketLossCalculator:
             self.fCnt = fCnt
 
         # Calculate packet loss based on fCnt difference
+        pl = 0
         if fCnt > self.fCnt:
             pl = (fCnt - self.fCnt - 1)
             self.totalpl += pl
