@@ -88,6 +88,8 @@ def Get_Signal_Performance_values(message_dict):
         tmp_dict['spreadingfactor'] = None
         logging.error("spreadingFactor was not found")
 
+    tmp_dict['fCnt'] = message_dict.get('fCnt', None)
+
     return tmp_dict
 
 def Get_Signal_Performance_metadata(message_dict):
