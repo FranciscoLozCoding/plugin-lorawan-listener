@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import datetime
 from dateutil import parser
 
 def parse_message_payload(payload_data):

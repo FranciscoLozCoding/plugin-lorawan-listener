@@ -1,7 +1,6 @@
 import logging
 import os
 import paho.mqtt.client as mqtt
-import time
 from waggle.plugin import Plugin
 from parse import *
 from calc import PacketLossCalculator
