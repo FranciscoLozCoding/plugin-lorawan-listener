@@ -11,6 +11,8 @@ If enabled, along with the measurements the plugin will also publish signal stre
 - [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
 - [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
 - [Spreading Factor](https://www.thethingsnetwork.org/docs/lorawan/spreading-factors/)
+- **PL** (packet loss): The number of data packets lost during transmission from the LoRaWAN end device to the network server.
+- **PLR** (packet loss ratio): The ratio of the number of data packets lost during transmission to the total number of packets sent or expected over a specific period, expressed as a percentage. It quantifies the reliability of communication between LoRaWAN end devices and the network server.
 
 The plugin expects the payload in the following format:
 ```
@@ -50,3 +52,5 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 **--ignore**: (opposite of --collect) A list of chirpstack measurements to ignore. If empty all will be retrieved (ex: --ignore m1 m2 m3)
 
 **--signal-strength-indicators**: enable signal strength indicators
+
+**--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
