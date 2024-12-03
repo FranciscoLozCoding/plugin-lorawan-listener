@@ -168,7 +168,7 @@ class My_Client:
                 logging.info("gatewayId: " + str(val["gatewayId"]))
                 logging.info("  rssi: " + str(val["rssi"]))
                 logging.info("  snr: " + str(val["snr"]))
-            logging.info("spreading factor: " + str(Performance_vals["spreadingFactor"]))
+            logging.info("spreading factor: " + str(Performance_vals["spreadingfactor"]))
             pl,plr = self.plr_calc.process_packet(Performance_vals['fCnt'])
             logging.info("packet loss: " + str(pl))
             if plr != None:
