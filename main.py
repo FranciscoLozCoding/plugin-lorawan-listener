@@ -47,6 +47,12 @@ def main():
         default=False,
         help="enable signal strength indicators"
     )
+    parser.add_argument(
+        "--plr",
+        default=os.getenv("PLR", 3600),
+        help="plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour",
+        type=int
+    )
     
     #get args
     args = parser.parse_args()

@@ -10,7 +10,7 @@ class My_Client:
     def __init__(self, args):
         self.args = args
         self.client = self.configure_client()
-        self.plr_calc = PacketLossCalculator()
+        self.plr_calc = PacketLossCalculator(self.args.plr)
 
     def configure_client(self):
         client_id = self.generate_client_id()

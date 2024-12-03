@@ -1,12 +1,11 @@
 import time
 
 class PacketLossCalculator:
-    def __init__(self):
+    def __init__(self, plr_sec: int):
         self.fCnt = 0  # Last frame count
         self.totalpl = 0  # Total packet loss
         self.pckcount = 0  # Total packets received
-        #TODO: change plr_rate_sec to an arg
-        self.plr_sec = 3600 # rate of plr calculation in seconds, 1 hour = 3600 seconds
+        self.plr_sec = plr_sec # rate of plr calculation in seconds, 1 hour = 3600 seconds
         self.last_calculation_time = time.time()  # Track the last calculation time
 
     def process_packet(self, fCnt):
