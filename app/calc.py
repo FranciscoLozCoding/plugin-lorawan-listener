@@ -29,6 +29,7 @@ class PacketLossCalculator:
         current_time = time.time()
         if current_time - self.last_calculation_time >= self.plr_sec:
             plr = self.totalpl / (self.pckcount + self.totalpl) if (self.pckcount + self.totalpl) > 0 else 0
+            plr = plr * 100
             
             # Reset for the next hour
             self.totalpl = 0
