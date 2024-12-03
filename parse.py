@@ -34,6 +34,7 @@ def Get_Measurement_metadata(message_dict):
     tags_dict = deviceInfo_dict.get('tags', None)
     try:
         for key, value in tags_dict.items():
+            key = clean_string(key)
             tmp_dict[key + "_tag"] = value
     except:
         pass
