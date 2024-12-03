@@ -4,11 +4,13 @@ import paho.mqtt.client as mqtt
 import time
 from waggle.plugin import Plugin
 from parse import *
+from calc import PacketLossCalculator
 
 class My_Client:
     def __init__(self, args):
         self.args = args
         self.client = self.configure_client()
+        self.plr_calc = PacketLossCalculator()
 
     def configure_client(self):
         client_id = self.generate_client_id()
@@ -85,8 +87,12 @@ class My_Client:
                 self.publish_measurement(measurement,timestamp,Measurement_metadata)
 
         if self.args.signal_strength_indicators:
-            #snr does not depend on gateway
+            #snr,pl,plr do not depend on gateway
             self.publish_signal(measurement={"name": "signal.spreadingfactor","value": Performance_vals["spreadingfactor"]},timestamp=timestamp, metadata=Performance_metadata)
+            pl,plr = self.plr_calc.process_packet(Performance_vals['fCnt'])
+            self.publish_signal(measurement={"name": "signal.pl","value": pl},timestamp=timestamp, metadata=Performance_metadata)
+            if plr != None:
+                self.publish_signal(measurement={"name": "signal.plr","value": plr},timestamp=timestamp, metadata=Performance_metadata)
             for val in Performance_vals['rxInfo']:
                 Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
                 self.publish_signal(measurement={"name": "signal.rssi","value": val["rssi"]},timestamp=timestamp, metadata=Performance_metadata)
