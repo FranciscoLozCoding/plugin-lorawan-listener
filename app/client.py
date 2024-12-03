@@ -88,7 +88,7 @@ class My_Client:
         if self.args.signal_strength_indicators:
             #snr,pl,plr do not depend on gateway
             self.publish_signal(measurement={"name": "signal.spreadingfactor","value": Performance_vals["spreadingfactor"]},timestamp=timestamp, metadata=Performance_metadata)
-            pl,plr = self.plr_calc.process_packet(Performance_vals['fCnt'])
+            pl,plr = self.plr_calc.process_packet(Performance_metadata['devEui'],Performance_vals['fCnt'])
             self.publish_signal(measurement={"name": "signal.pl","value": pl},timestamp=timestamp, metadata=Performance_metadata)
             if plr != None:
                 self.publish_signal(measurement={"name": "signal.plr","value": plr},timestamp=timestamp, metadata=Performance_metadata)
@@ -152,6 +152,7 @@ class My_Client:
 
         if self.args.signal_strength_indicators:
             Performance_vals = Get_Signal_Performance_values(metadata)
+            Performance_metadata = Get_Signal_Performance_metadata(metadata)
         
         for measurement in measurements:
             # Skip the measurement if it's in the ignore list
@@ -169,7 +170,7 @@ class My_Client:
                 logging.info("  rssi: " + str(val["rssi"]))
                 logging.info("  snr: " + str(val["snr"]))
             logging.info("spreading factor: " + str(Performance_vals["spreadingfactor"]))
-            pl,plr = self.plr_calc.process_packet(Performance_vals['fCnt'])
+            pl,plr = self.plr_calc.process_packet(Performance_metadata['devEui'], Performance_vals['fCnt'])
             logging.info("packet loss: " + str(pl))
             if plr != None:
                 logging.info("packet loss rate: " + str(plr))
