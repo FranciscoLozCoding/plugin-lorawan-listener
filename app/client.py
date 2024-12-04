@@ -171,9 +171,9 @@ class My_Client:
                 logging.info("  snr: " + str(val["snr"]))
             logging.info("spreading factor: " + str(Performance_vals["spreadingfactor"]))
             pl,plr = self.plr_calc.process_packet(Performance_metadata['devEui'], Performance_vals['fCnt'])
-            logging.info("packet loss: " + str(pl))
+            logging.info(f"packet loss: {pl}")
             if plr != None:
-                logging.info("packet loss rate: " + str(plr))
+                logging.info(f"packet loss rate: {plr:.2f}%")
 
         return
 

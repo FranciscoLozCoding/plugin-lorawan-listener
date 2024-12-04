@@ -40,6 +40,7 @@ class PacketLossCalculator:
         if current_time - device["last_calculation_time"] >= self.plr_sec:
             total_packets = device["pckcount"] + device["totalpl"]
             plr = (device["totalpl"] / total_packets * 100) if total_packets > 0 else 0
+            plr = round(plr, 2)#Format PLR to two decimal places
 
             # Reset the counters for the next interval
             device["totalpl"] = 0
