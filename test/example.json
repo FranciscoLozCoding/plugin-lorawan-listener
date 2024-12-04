@@ -1,0 +1,127 @@
+{
+    "deduplicationId": "bffdb4cb-b44d-4586-adf1-730e7767dfc5",
+    "time": "2024-12-03T15:48:41.591164273+00:00",
+    "deviceInfo": {
+        "tenantId": "50f14dd4-c6f1-1234-1122-4054e1d11142",
+        "tenantName": "ChirpStack",
+        "applicationId": "f605d98d-d5eb-4a1c-a50d-cccb331c4b1b",
+        "applicationName": "default",
+        "deviceProfileId": "a58b16ba-8561-4495-be25-329a32446da7",
+        "deviceProfileName": "MFR_node",
+        "deviceName": "MFR node MNLA4O105",
+        "devEui": "a232580gd1a2c555",
+        "deviceClassEnabled": "CLASS_A",
+        "tags": {
+            "serial number": "MNLA4O105"
+        }
+    },
+    "devAddr": "0443653d",
+    "adr": true,
+    "dr": 1,
+    "fCnt": 35910,
+    "fPort": 1,
+    "confirmed": false,
+    "data": "EIV/wAAAf8AAAH/AAAB/wAAAf8AAAA==",
+    "object": {
+        "measurements": [
+            {
+                "channelId": 0.0,
+                "value": "DATA_PACKET",
+                "name": "packet-type"
+            },
+            {
+                "channelId": 0.0,
+                "name": "payload-version",
+                "value": 1.0
+            },
+            {
+                "channelId": 0.0,
+                "name": "charging-state",
+                "value": 0.0
+            },
+            {
+                "channelId": 0.0,
+                "value": 0.0,
+                "name": "fault"
+            },
+            {
+                "name": "header",
+                "channelId": 0.0,
+                "value": 85.0
+            },
+            {
+                "channelId": 0.0,
+                "value": 5.0,
+                "name": "command"
+            },
+            {
+                "address": 5.0,
+                "unit": "m/s",
+                "source": "sdi_5",
+                "name": "instantaneous-windspeed",
+                "channelId": 0.0,
+                "value": null
+            },
+            {
+                "unit": "Degrees",
+                "channelId": 0.0,
+                "source": "sdi_5",
+                "value": null,
+                "address": 5.0,
+                "name": "instantaneous-wind-direction"
+            },
+            {
+                "source": "sdi_5",
+                "name": "windspeed",
+                "value": null,
+                "unit": "m/s",
+                "address": 5.0,
+                "channelId": 0.0
+            },
+            {
+                "channelId": 0.0,
+                "unit": "Degree",
+                "name": "wind-direction",
+                "source": "sdi_5",
+                "value": null,
+                "address": 5.0
+            },
+            {
+                "address": 5.0,
+                "unit": "m/s",
+                "name": "gust-windspeed",
+                "value": null,
+                "channelId": 0.0,
+                "source": "sdi_5"
+            }
+        ]
+    },
+    "rxInfo": [
+        {
+            "gatewayId": "a55e18bbbea9q428",
+            "uplinkId": 16708,
+            "nsTime": "2024-12-03T15:48:41.343580567+00:00",
+            "rssi": -43,
+            "snr": 13.0,
+            "channel": 4,
+            "rfChain": 1,
+            "location": {},
+            "context": "YD01Pw==",
+            "metadata": {
+                "region_config_id": "us915_sb2",
+                "region_common_name": "US915"
+            },
+            "crcStatus": "CRC_OK"
+        }
+    ],
+    "txInfo": {
+        "frequency": 904700000,
+        "modulation": {
+            "lora": {
+                "bandwidth": 125000,
+                "spreadingFactor": 9,
+                "codeRate": "CR_4_5"
+            }
+        }
+    }
+}

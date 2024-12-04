@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import datetime
 from dateutil import parser
 
 def parse_message_payload(payload_data):
@@ -34,6 +33,7 @@ def Get_Measurement_metadata(message_dict):
     tags_dict = deviceInfo_dict.get('tags', None)
     try:
         for key, value in tags_dict.items():
+            key = clean_string(key)
             tmp_dict[key + "_tag"] = value
     except:
         pass
@@ -86,6 +86,8 @@ def Get_Signal_Performance_values(message_dict):
     else:
         tmp_dict['spreadingfactor'] = None
         logging.error("spreadingFactor was not found")
+
+    tmp_dict['fCnt'] = message_dict.get('fCnt', None)
 
     return tmp_dict
 

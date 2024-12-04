@@ -237,6 +237,8 @@ successCriteria:
 
 **--signal-strength-indicators**: enable signal strength indicators
 
+**--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
+
 ## Retrieving Published Data
 
 There are two recommended approaches to retrieving LoRaWAN values:
@@ -276,6 +278,8 @@ If enabled, along with the measurements the plugin will also publish signal stre
 - [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
 - [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
 - [Spreading Factor](https://www.thethingsnetwork.org/docs/lorawan/spreading-factors/)
+- **PL** (packet loss): The number of data packets lost during transmission from the LoRaWAN end device to the network server.
+- **PLR** (packet loss ratio): The ratio of the number of data packets lost during transmission to the total number of packets sent or expected over a specific period, expressed as a percentage. It quantifies the reliability of communication between LoRaWAN end devices and the network server.
 
 ### Metadata
 
