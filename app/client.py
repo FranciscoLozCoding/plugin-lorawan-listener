@@ -117,10 +117,11 @@ class My_Client:
                 plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
 
                 # If the function succeeds, log a success message
-                logging.info('%s published', measurement["name"])
+                logging.info(f'{measurement["name"]} published')
             except Exception as e:
                 # If an exception is raised, log an error message
-                logging.error('measurement did not publish encountered an error: %s', str(e))
+                #TODO: values with NULL are throwing this exception, how can I fix this?
+                logging.error(f'measurement {measurement["name"]} did not publish encountered an error: {str(e)}')
         return
 
     def dry_message(self, client, userdata, message):
