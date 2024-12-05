@@ -90,7 +90,7 @@ class My_Client:
             self.publish_signal(measurement={"name": "signal.spreadingfactor","value": Performance_vals["spreadingfactor"]},timestamp=timestamp, metadata=Performance_metadata)
             pl,plr = self.plr_calc.process_packet(Performance_metadata['devEui'],Performance_vals['fCnt'])
             self.publish_signal(measurement={"name": "signal.pl","value": pl},timestamp=timestamp, metadata=Performance_metadata)
-            if plr != None:
+            if plr is not None:
                 self.publish_signal(measurement={"name": "signal.plr","value": plr},timestamp=timestamp, metadata=Performance_metadata)
             for val in Performance_vals['rxInfo']:
                 Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
@@ -111,7 +111,7 @@ class My_Client:
 
     @staticmethod
     def publish(measurement,timestamp,metadata):
-        if measurement["value"] != None: #avoid NULLs
+        if measurement["value"] is not None: #avoid NULLs
             with Plugin() as plugin: #publish lorawan data
                 try:
                     plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
@@ -171,7 +171,7 @@ class My_Client:
             logging.info("spreading factor: " + str(Performance_vals["spreadingfactor"]))
             pl,plr = self.plr_calc.process_packet(Performance_metadata['devEui'], Performance_vals['fCnt'])
             logging.info(f"packet loss: {pl}")
-            if plr != None:
+            if plr is not None:
                 logging.info(f"packet loss rate: {plr:.2f}%")
 
         return
