@@ -111,16 +111,15 @@ class My_Client:
 
     @staticmethod
     def publish(measurement,timestamp,metadata):
-
-        with Plugin() as plugin: #publish lorawan data
-            try:
-                plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
-
-                # If the function succeeds, log a success message
-                logging.info('%s published', measurement["name"])
-            except Exception as e:
-                # If an exception is raised, log an error message
-                logging.error('measurement did not publish encountered an error: %s', str(e))
+        if measurement["value"] != None: #avoid NULLs
+            with Plugin() as plugin: #publish lorawan data
+                try:
+                    plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
+                    # If the function succeeds, log a success message
+                    logging.info(f'{measurement["name"]} published')
+                except Exception as e:
+                    # If an exception is raised, log an error message
+                    logging.error(f'measurement {measurement["name"]} did not publish encountered an error: {str(e)}')
         return
 
     def dry_message(self, client, userdata, message):
