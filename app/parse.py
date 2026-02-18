@@ -38,6 +38,8 @@ def Get_Measurement_metadata(message_dict):
     except:
         pass
 
+    #NOTE: NEVER get device variables, they hold sensitive data that should not be exposed.
+
     return tmp_dict
 
 def clean_message_measurement(measurement):
@@ -110,6 +112,8 @@ def Get_Signal_Performance_metadata(message_dict):
             tmp_dict[key + "_tag"] = value
     except:
         pass
+
+    #NOTE: NEVER get device variables, they hold sensitive data that should not be exposed.
 
     return tmp_dict
 
