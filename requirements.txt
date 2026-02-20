@@ -1,3 +1,4 @@
 pywaggle==0.55.*
 paho-mqtt==1.6.1
 python-dateutil
+websocket-client>=1.6.0
