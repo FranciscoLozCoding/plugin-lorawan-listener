@@ -1,6 +1,6 @@
 ## About The Plugin
 
-This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
+This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. It can receive data from **both** the local ChirpStack (MQTT) and **Loriot** (WebSocket) at the same time, so you can aggregate local gateway traffic and remote Loriot traffic on one node. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
 
 When the plugin receives data from a LoRaWAN device, it publishes that data to the beehive. This is where all the data received from the LoRaWAN devices is stored. Other users can then subscribe to the measurement(s) to access the data, or use it to build larger applications that rely on LoRaWAN data.
 
@@ -29,8 +29,7 @@ payload = {
 # Using the code
 
 Before the plugin can work...
-1) [Rpi with RAK concentrator has to be discoverable by K3s Cluster](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md##setting-up-rak-discover-kit-2-to-be-discoverable-by-wes)
-1) [LoRa End Device is activated](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
+1) The node must have a healthy LoRaWAN gateway
 1) [The Payload Conforms with LoRaWAN Listener](https://github.com/FranciscoLozCoding/plugin-lorawan-listener#converting-chirpstack-payload-decoders)
 
 For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggle-lorawan)
@@ -54,3 +53,13 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 **--signal-strength-indicators**: enable signal strength indicators
 
 **--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
+
+**--enable-loriot**: enable the Loriot WebSocket client to receive uplinks from the Loriot network server (runs alongside ChirpStack)
+
+**--loriot-websocket-url**: Loriot WebSocket URL (required when using --enable-loriot). Can be set via `LORIOT_WEBSOCKET_URL` environment variable.
+
+**--loriot-app-token**: optional Loriot app token for WebSocket authentication. Can be set via `LORIOT_APP_TOKEN` environment variable.
+
+# Loriot Integration
+
+When using Loriot, configure a **Payload Codec (JavaScript formatter)** in the LORIOT console so that WebSocket messages include the decoded **`object`** field. Also, make sure to **enable extended verbosity** in the LORIOT console so that the WebSocket messages can include radio information such as RSSI, SNR, and spreading factor. Finally, enable the **Device Name** option in the LORIOT console so that the WebSocket messages can include the device name.

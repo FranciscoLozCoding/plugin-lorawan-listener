@@ -239,6 +239,22 @@ successCriteria:
 
 **--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
 
+**--enable-loriot**: enable the Loriot WebSocket client to receive uplinks from the Loriot network server (runs alongside ChirpStack)
+
+**--loriot-websocket-url**: Loriot WebSocket URL (required when using --enable-loriot). Example: `wss://...`. Can be set via `LORIOT_WEBSOCKET_URL` environment variable.
+
+**--loriot-app-token**: optional Loriot app token for WebSocket authentication. Can be set via `LORIOT_APP_TOKEN` environment variable.
+
+## Loriot Integration
+
+The plugin can receive data from **both** the local ChirpStack (MQTT) and **Loriot** (WebSocket) at the same time. This lets you aggregate local gateway traffic and remote Loriot traffic on one node.
+
+- **Enable Loriot**: use `--enable-loriot` and set `--loriot-websocket-url` to the WebSocket URL from your Loriot application (Application Outputs / WebSocket). The plugin connects out to Loriot, so the node does not need a public IP.
+- **Payload Codec required**: Configure a **Payload Codec (JavaScript formatter)** in the LORIOT console so that WebSocket messages include the decoded **`object`** field. Messages **without** `object` are rejected and not published.
+- **Extended verbosity**: Make sure to enable extended verbosity in the LORIOT console so that the WebSocket messages can include radio information such as RSSI, SNR, and spreading factor.
+- **Device Name**: Enable the **Device Name** option in the LORIOT console so that the WebSocket messages can include the device name.
+- **Network of gateways**: You can build a network of gateways by using Loriot for devices whose gateways connect to Loriot, then enabling Loriot in the LoRaWAN listener so this node publishes measurements from those devices alongside local ChirpStack data.
+
 ## Retrieving Published Data
 
 There are two recommended approaches to retrieving LoRaWAN values:
