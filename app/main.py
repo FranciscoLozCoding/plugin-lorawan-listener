@@ -1,6 +1,8 @@
 import logging
 import argparse
-from client import *
+import os
+from client import My_Client
+from loriot_client import start_loriot_client_daemon
 
 def main():
     parser = argparse.ArgumentParser()
@@ -53,18 +55,34 @@ def main():
         help="plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour",
         type=int
     )
-    
-    #get args
+    parser.add_argument(
+        "--enable-loriot",
+        action="store_true",
+        default=False,
+        help="enable Loriot WebSocket client to receive uplinks from Loriot network server",
+    )
+    parser.add_argument(
+        "--loriot-websocket-url",
+        default=os.getenv("LORIOT_WEBSOCKET_URL", ""),
+        help="Loriot WebSocket URL (required when --enable-loriot); e.g. wss://...",
+    )
+    parser.add_argument(
+        "--loriot-app-token",
+        default=os.getenv("LORIOT_APP_TOKEN", ""),
+        help="optional Loriot app token for WebSocket authentication",
+    )
+
     args = parser.parse_args()
 
-    #configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.INFO,
         format="%(asctime)s %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
     )
 
-    #configure client
+    if args.enable_loriot:
+        start_loriot_client_daemon(args)
+
     mqtt_client = My_Client(args)
     mqtt_client.run()
 

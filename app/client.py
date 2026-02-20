@@ -2,8 +2,87 @@ import logging
 import os
 import paho.mqtt.client as mqtt
 from waggle.plugin import Plugin
-from parse import *
+from parse import (
+    parse_message_payload,
+    convert_time,
+    Get_Measurement_metadata,
+    Get_Signal_Performance_values,
+    Get_Signal_Performance_metadata,
+    clean_message_measurement,
+)
 from calc import PacketLossCalculator
+
+
+def process_and_publish(
+    measurements,
+    timestamp_ns,
+    measurement_metadata,
+    signal_values,
+    signal_metadata,
+    args,
+    plr_calc,
+):
+    """
+    Shared publish pipeline for ChirpStack and Loriot.
+    Applies --collect/--ignore, cleans measurement names, publishes each measurement
+    and optionally signal metrics (spreading factor, pl, plr, rssi, snr per gateway).
+    """
+    for measurement in measurements:
+        if measurement["name"] in args.ignore:
+            continue
+        if args.collect and measurement["name"] not in args.collect:
+            continue
+        _publish_measurement(measurement, timestamp_ns, measurement_metadata)
+
+    if not args.signal_strength_indicators or not signal_values or not signal_metadata:
+        return
+
+    perf = signal_values
+    meta = signal_metadata.copy()
+    _publish_signal(
+        {"name": "signal.spreadingfactor", "value": perf.get("spreadingfactor")},
+        timestamp_ns,
+        meta,
+    )
+    pl, plr = plr_calc.process_packet(
+        meta["devEui"], perf.get("fCnt")
+    )
+    _publish_signal({"name": "signal.pl", "value": pl}, timestamp_ns, meta)
+    if plr is not None:
+        _publish_signal({"name": "signal.plr", "value": plr}, timestamp_ns, meta)
+    for val in perf.get("rxInfo") or []:
+        meta["gatewayId"] = val.get("gatewayId")
+        _publish_signal({"name": "signal.rssi", "value": val.get("rssi")}, timestamp_ns, meta)
+        _publish_signal({"name": "signal.snr", "value": val.get("snr")}, timestamp_ns, meta)
+
+
+def _publish_signal(measurement, timestamp, metadata):
+    _publish(measurement, timestamp, metadata)
+
+
+def _publish_measurement(measurement, timestamp, metadata):
+    measurement = clean_message_measurement(measurement.copy())
+    _publish(measurement, timestamp, metadata)
+
+
+def _publish(measurement, timestamp, metadata):
+    if measurement.get("value") is not None:
+        with Plugin() as plugin:
+            try:
+                plugin.publish(
+                    measurement["name"],
+                    measurement["value"],
+                    timestamp=timestamp,
+                    meta=metadata,
+                )
+                logging.info("%s published", measurement["name"])
+            except Exception as e:
+                logging.error(
+                    "measurement %s did not publish: %s",
+                    measurement["name"],
+                    str(e),
+                )
+
 
 class My_Client:
     def __init__(self, args):
@@ -52,75 +131,33 @@ class My_Client:
         return
 
     def publish_message(self, client, userdata, message):
-        self.log_message(message) #log message
+        self.log_message(message)
 
-        try: #get metadata and measurements received
+        try:
             metadata = parse_message_payload(message.payload.decode("utf-8"))
             measurements = metadata["object"]["measurements"]
-        except:
+        except Exception:
             logging.error("Message did not contain measurements.")
             return
 
-        #get chirpstack time and convert to time in nanoseconds
-        timestamp = convert_time(metadata["time"])
-
-        #Get Lorawan signal performance vals
-        if self.args.signal_strength_indicators:
-            Performance_vals = Get_Signal_Performance_values(metadata)
-            Performance_metadata = Get_Signal_Performance_metadata(metadata) 
-
-        #remove measurement metadata
+        timestamp_ns = convert_time(metadata["time"])
         try:
-            Measurement_metadata = Get_Measurement_metadata(metadata)
-        except:
+            measurement_metadata = Get_Measurement_metadata(metadata)
+        except Exception:
             return
-        
-        for measurement in measurements:
-            # Skip the measurement if it's in the ignore list
-            if measurement["name"] in self.args.ignore:
-                continue
-            if self.args.collect: #true if not empty
-                if measurement["name"] in self.args.collect: #if not empty only publish measurements in list
-                    self.publish_measurement(measurement,timestamp,Measurement_metadata)
-            else: #else collect is empty so publish all measurements
-                self.publish_measurement(measurement,timestamp,Measurement_metadata)
 
-        if self.args.signal_strength_indicators:
-            #snr,pl,plr do not depend on gateway
-            self.publish_signal(measurement={"name": "signal.spreadingfactor","value": Performance_vals["spreadingfactor"]},timestamp=timestamp, metadata=Performance_metadata)
-            pl,plr = self.plr_calc.process_packet(Performance_metadata['devEui'],Performance_vals['fCnt'])
-            self.publish_signal(measurement={"name": "signal.pl","value": pl},timestamp=timestamp, metadata=Performance_metadata)
-            if plr is not None:
-                self.publish_signal(measurement={"name": "signal.plr","value": plr},timestamp=timestamp, metadata=Performance_metadata)
-            for val in Performance_vals['rxInfo']:
-                Performance_metadata['gatewayId'] = val["gatewayId"] #add gateway id to metadata since rssi and snr differ per gateway
-                self.publish_signal(measurement={"name": "signal.rssi","value": val["rssi"]},timestamp=timestamp, metadata=Performance_metadata)
-                self.publish_signal(measurement={"name": "signal.snr","value": val["snr"]},timestamp=timestamp, metadata=Performance_metadata)
+        signal_values = Get_Signal_Performance_values(metadata) if self.args.signal_strength_indicators else None
+        signal_metadata = Get_Signal_Performance_metadata(metadata) if self.args.signal_strength_indicators else None
 
-        return
-    
-
-    def publish_signal(self, measurement,timestamp,metadata):
-        self.publish(measurement,timestamp,metadata)
-        return
-    
-    def publish_measurement(self, measurement,timestamp,metadata):
-        measurement = clean_message_measurement(measurement) #clean measurement names
-        self.publish(measurement,timestamp,metadata)
-        return
-
-    @staticmethod
-    def publish(measurement,timestamp,metadata):
-        if measurement["value"] is not None: #avoid NULLs
-            with Plugin() as plugin: #publish lorawan data
-                try:
-                    plugin.publish(measurement["name"], measurement["value"], timestamp=timestamp, meta=metadata)
-                    # If the function succeeds, log a success message
-                    logging.info(f'{measurement["name"]} published')
-                except Exception as e:
-                    # If an exception is raised, log an error message
-                    logging.error(f'measurement {measurement["name"]} did not publish encountered an error: {str(e)}')
-        return
+        process_and_publish(
+            measurements,
+            timestamp_ns,
+            measurement_metadata,
+            signal_values,
+            signal_metadata,
+            self.args,
+            self.plr_calc,
+        )
 
     def dry_message(self, client, userdata, message):
 

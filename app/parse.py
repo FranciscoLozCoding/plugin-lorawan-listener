@@ -14,6 +14,7 @@ def Get_Measurement_metadata(message_dict):
 
     #Get static metadata
     tmp_dict['devAddr'] = message_dict.get('devAddr', None)
+    tmp_dict['lns'] = 'local_chirpstack'
 
     #get values from nested dictionary
     deviceInfo_dict = message_dict.get('deviceInfo', None)
@@ -101,6 +102,7 @@ def Get_Signal_Performance_metadata(message_dict):
     try:
         tmp_dict['deviceName'] = deviceInfo_dict['deviceName']
         tmp_dict['devEui'] = deviceInfo_dict['devEui']
+        tmp_dict['lns'] = 'local_chirpstack'
     except:
         logging.error("deviceInfo was not found")
 
