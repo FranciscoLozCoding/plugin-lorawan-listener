@@ -85,8 +85,9 @@ def _publish(measurement, timestamp, metadata):
 
 
 class My_Client:
-    def __init__(self, args):
+    def __init__(self, args, contract=None):
         self.args = args
+        self.contract = contract
         self.client = self.configure_client()
         self.plr_calc = PacketLossCalculator(self.args.plr)
 
@@ -135,9 +136,27 @@ class My_Client:
 
         try:
             metadata = parse_message_payload(message.payload.decode("utf-8"))
-            measurements = metadata["object"]["measurements"]
         except Exception:
-            logging.error("Message did not contain measurements.")
+            logging.error("Message payload could not be parsed.")
+            return
+
+        measurements = None
+        try:
+            measurements = metadata["object"]["measurements"]
+        except (KeyError, TypeError):
+            pass
+
+        if measurements is None and self.contract:
+            raw_data = metadata.get("data")
+            device_info = metadata.get("deviceInfo") or {}
+            device_name = device_info.get("deviceName")
+            if raw_data is not None and device_name:
+                measurements = self.contract.decode_with_codec(
+                    device_name, raw_data, encoding="base64"
+                )
+
+        if measurements is None:
+            logging.error("Message did not contain measurements and codec fallback did not apply.")
             return
 
         timestamp_ns = convert_time(metadata["time"])
