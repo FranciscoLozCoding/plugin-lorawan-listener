@@ -1,0 +1,7 @@
+{
+  "Water meter": "https://github.com/org/water-meter-codec",
+  "^MFR node .*": "https://github.com/org/mfr-codec",
+  ".*sensor.*": "/path/to/local/codec/repo",
+  "Device A": "https://github.com/waggle-sensor/codec.git/codecs/water",
+  "Device B": "https://github.com/waggle-sensor/codec.git/codecs/mfr_node"
+}
