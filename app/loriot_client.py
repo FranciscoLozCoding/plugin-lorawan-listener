@@ -14,8 +14,9 @@ import websocket
 class LoriotClient:
     """WebSocket client for Loriot uplinks. Runs in a thread and publishes via the shared pipeline."""
 
-    def __init__(self, args):
+    def __init__(self, args, contract=None):
         self.args = args
+        self.contract = contract
         self.plr_calc = PacketLossCalculator(args.plr)
         self._url = getattr(args, "loriot_websocket_url", None) or ""
         self._token = getattr(args, "loriot_app_token", None) or ""
@@ -23,7 +24,11 @@ class LoriotClient:
     def _on_message(self, ws, message):
         logging.debug("Loriot WebSocket message: %s", message)
         try:
-            parsed = parse_loriot_payload(message, self._url)
+            parsed = parse_loriot_payload(
+                message,
+                self._url,
+                codec_contract=self.contract,
+            )
             if parsed is None:
                 return
             process_and_publish(
@@ -78,7 +83,7 @@ class LoriotClient:
         logging.info("Loriot WebSocket client started in background thread.")
 
 
-def start_loriot_client_daemon(args):
+def start_loriot_client_daemon(args, contract=None):
     """
     Start the Loriot WebSocket client in a daemon thread.
     Call this when --enable-loriot is set and --loriot-websocket-url is provided.
@@ -90,5 +95,5 @@ def start_loriot_client_daemon(args):
         logging.warning("Loriot enabled but --loriot-websocket-url not set; skipping Loriot client.")
         return
 
-    client = LoriotClient(args)
+    client = LoriotClient(args, contract)
     client.start_daemon()
