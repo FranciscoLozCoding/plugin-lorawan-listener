@@ -84,7 +84,7 @@ def _publish(measurement, timestamp, metadata):
                 )
 
 
-class My_Client:
+class ChirpstackClient:
     def __init__(self, args, contract=None):
         self.args = args
         self.contract = contract
@@ -156,10 +156,13 @@ class My_Client:
                 )
 
         if measurements is None:
-            logging.error("Message did not contain measurements and codec fallback did not apply.")
+            logging.error("ChirpStack message did not contain measurements and codec fallback did not apply.")
             return
 
-        timestamp_ns = convert_time(metadata["time"])
+        timestamp_ns = convert_time(metadata.get("time"))
+        if timestamp_ns is None:
+            logging.error("ChirpStack message missing or invalid time: %s", metadata.get("time"))
+            return
         try:
             measurement_metadata = Get_Measurement_metadata(metadata)
         except Exception:
@@ -179,11 +182,8 @@ class My_Client:
         )
 
     def dry_message(self, client, userdata, message):
-
         self.log_message(message)
-
         self.log_measurements(message)
-
         return
 
     @staticmethod

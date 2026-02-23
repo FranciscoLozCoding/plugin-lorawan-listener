@@ -2,7 +2,7 @@ import logging
 import argparse
 import os
 from codec_loader import Contract
-from client import My_Client
+from client import ChirpstackClient
 from loriot_client import start_loriot_client_daemon
 
 def main():
@@ -103,7 +103,7 @@ def main():
     if args.enable_loriot:
         start_loriot_client_daemon(args, codec_contract)
 
-    mqtt_client = My_Client(args, codec_contract)
+    mqtt_client = ChirpstackClient(args, codec_contract)
     mqtt_client.run()
 
 if __name__ == "__main__":
