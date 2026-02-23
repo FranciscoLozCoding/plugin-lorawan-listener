@@ -54,7 +54,9 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
 
-**--loriot-inbox-dir**: directory to watch for Loriot message files. Plugin does not connect to Loriot; run `scripts/loriot-websocket-to-files.sh` on the node to write messages here. Env: `LORAWAN_LORIOT_INBOX` or `LORIOT_INBOX_DIR`.
+**--loriot-inbox-dir**: directory to watch for Loriot message files. Plugin does not connect to Loriot directly. Env: `LORAWAN_LORIOT_INBOX` or `LORIOT_INBOX_DIR`.
+
+**--loriot-poll-interval-sec**: seconds between polls of the Loriot inbox directory (default: 1.5). Can be set via `LORIOT_POLL_INTERVAL_SEC` environment variable.
 
 **--codec-map**: codec fallback map (path to a JSON file or a string containing JSON). Used when Loriot messages lack `decoded` or ChirpStack messages lack `object.measurements`. Map keys are device names or regex patterns; values are GitHub repo URLs or local paths to a directory containing `codec.py`. To host multiple codecs in one repo, append a path after `.git` (e.g. `https://github.com/org/codec.git/codecs/water`). Can be set via `LORAWAN_CODEC_MAP` environment variable.
 
@@ -66,4 +68,4 @@ When a message has no decoded payload (Loriot: missing or empty `decoded`; Chirp
 
 # Loriot Integration
 
-Loriot input is via **file inbox** only (plugin does not connect to Loriot). Set `--loriot-inbox-dir` to a path that is mounted into the plugin pod; run `scripts/loriot-websocket-to-files.sh` on the node with `LORIOT_WEBSOCKET_URL` and `LORIOT_INBOX_DIR` (or `LORAWAN_LORIOT_INBOX`) set. **LNS metadata**: ChirpStack uses `lns: "local_chirpstack"`; Loriot uses `lns: "loriot"`. Codec fallback and Device Name in LORIOT apply as in the README. The plugin does **not** publish signal indicators for Loriot.
+Loriot input is via **file inbox** only (plugin does not connect to Loriot). Set `--loriot-inbox-dir` to a path that is mounted into the plugin pod. **LNS metadata**: ChirpStack uses `lns: "local_chirpstack"`; Loriot uses `lns: "loriot"`. Codec fallback and Device Name in LORIOT apply as in the README. The plugin does **not** publish signal indicators for Loriot.
