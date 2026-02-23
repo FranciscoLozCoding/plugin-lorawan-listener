@@ -1,0 +1,36 @@
+# Example job.yaml file for the lorawan-listener plugin using the loriot integration
+name: W07C_Lorawan_network
+plugins:
+- name: lorawan-listener
+  pluginSpec:
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.18
+    args:
+    - --signal-strength-indicators
+    - --plr
+    - "3600"
+    - --ignore
+    - fault
+    - packet-type
+    - header
+    - payload-version
+    - command
+    - charging-state
+    - firmware-mainboard
+    - firmware-ucmi
+    - batch-number
+    - product-id
+    - software-version
+    - digital-count
+    - --loriot-inbox-dir
+    - /app/lorawan-loriot-inbox
+    selector:
+      kubernetes.io/hostname: 0000dca6328534ce.ws-rpi
+    volume:
+      /var/lorawan-loriot-inbox: /app/lorawan-loriot-inbox
+nodeTags: []
+nodes:
+  W07C: true
+scienceRules:
+- 'schedule("lorawan-listener"): cronjob("lorawan-listener", "* * * * *")'
+successCriteria:
+- WallClock('1day')
