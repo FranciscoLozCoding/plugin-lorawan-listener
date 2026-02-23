@@ -1,12 +1,12 @@
 ## About The Plugin
 
-This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
+This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. It can receive data from **both** the local ChirpStack (MQTT) and **Loriot** (via file inbox) at the same time, so you can aggregate local gateway traffic and remote Loriot traffic on one node. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
 
 When the plugin receives data from a LoRaWAN device, it publishes that data to the beehive. This is where all the data received from the LoRaWAN devices is stored. Other users can then subscribe to the measurement(s) to access the data, or use it to build larger applications that rely on LoRaWAN data.
 
 To help users identify where the value came from, the plugin includes metadata when it publishes the value to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the value was collected.
 
-If enabled, along with the measurements the plugin will also publish signal strength indicators to help users determine the strength of the wireless connection. The indicators published are as follows with links for more information on the indicator.
+When using **ChirpStack** with `--signal-strength-indicators`, the plugin publishes signal strength indicators. **Loriot** uplinks do not include signal metrics (RSSI, SNR, PL, PLR). The indicators for ChirpStack are:
 
 - [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
 - [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
@@ -29,8 +29,7 @@ payload = {
 # Using the code
 
 Before the plugin can work...
-1) [Rpi with RAK concentrator has to be discoverable by K3s Cluster](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md##setting-up-rak-discover-kit-2-to-be-discoverable-by-wes)
-1) [LoRa End Device is activated](https://github.com/waggle-sensor/waggle-lorawan/blob/main/README.md#configuring-the-wes-lorawan)
+1) The node must have a healthy LoRaWAN gateway
 1) [The Payload Conforms with LoRaWAN Listener](https://github.com/FranciscoLozCoding/plugin-lorawan-listener#converting-chirpstack-payload-decoders)
 
 For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggle-lorawan)
@@ -39,7 +38,7 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--debug**: enable debug logs
 
-**--dry**: enable dry-run mode where no messages will be broadcast to Beehive
+**--dry**: enable dry-run mode where no messages will be broadcast to Beehive (applies to both ChirpStack and Loriot)
 
 **--mqtt-server-ip**: MQTT server IP address
 
@@ -54,3 +53,19 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 **--signal-strength-indicators**: enable signal strength indicators
 
 **--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
+
+**--loriot-inbox-dir**: directory to watch for Loriot message files. Plugin does not connect to Loriot directly. Env: `LORAWAN_LORIOT_INBOX` or `LORIOT_INBOX_DIR`.
+
+**--loriot-poll-interval-sec**: seconds between polls of the Loriot inbox directory (default: 1.5). Can be set via `LORIOT_POLL_INTERVAL_SEC` environment variable.
+
+**--codec-map**: codec fallback map (path to a JSON file or a string containing JSON). Used when Loriot messages lack `decoded` or ChirpStack messages lack `object.measurements`. Map keys are device names or regex patterns; values are GitHub repo URLs or local paths to a directory containing `codec.py`. To host multiple codecs in one repo, append a path after `.git` (e.g. `https://github.com/org/codec.git/codecs/water`). Can be set via `LORAWAN_CODEC_MAP` environment variable.
+
+**--codec-cache-dir**: directory where GitHub codec repos are cloned (default: `~/.cache/lorawan-listener-codecs`). Can be set via `LORAWAN_CODEC_CACHE` environment variable.
+
+# Codec fallback
+
+When a message has no decoded payload (Loriot: missing or empty `decoded`; ChirpStack: missing `object` or `object.measurements`), the plugin can decode the raw payload using a device-mapped Python codec if `--codec-map` is set. The map is a JSON object: keys are device names or regex patterns (first match wins), values are GitHub repo URLs or local paths. The codec source must contain a `codec.py` at the repo root (or in a path after `.git`) with a class `Codec` and a method `decode(self, payload_bytes: bytes) -> dict` that returns a flat dict of measurement name → value. The plugin converts that to the internal measurements format. See the README **Codec fallback** section and the **examples/codec_example/** directory in plugin's repo for the example codec and map.
+
+# Loriot Integration
+
+Loriot input is via **file inbox** only (plugin does not connect to Loriot). Set `--loriot-inbox-dir` to a path that is mounted into the plugin pod. **LNS metadata**: ChirpStack uses `lns: "local_chirpstack"`; Loriot uses `lns: "loriot"`. Codec fallback and Device Name in LORIOT apply as in the README. The plugin does **not** publish signal indicators for Loriot.

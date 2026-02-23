@@ -1,8 +1,19 @@
+"""
+LoRaWAN Listener plugin entry point.
+
+Parses CLI and env, configures logging, loads and warms the codec contract (if configured),
+then starts the Loriot inbox watcher (if --loriot-inbox-dir is set) and the ChirpStack MQTT client.
+"""
 import logging
 import argparse
-from client import *
+import os
+from codec_loader import Contract
+from client import ChirpstackClient
+from loriot_watcher import start_loriot_inbox_daemon
 
-def main():
+
+def main() -> None:
+    """Parse arguments, set up logging and codec contract, then run ChirpStack (and optionally Loriot) clients."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", help="enable debug logs")
     parser.add_argument(
@@ -53,19 +64,52 @@ def main():
         help="plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour",
         type=int
     )
-    
-    #get args
+    parser.add_argument(
+        "--loriot-inbox-dir",
+        default=os.getenv("LORIOT_INBOX_DIR", ""),
+        help="directory to watch for Loriot message files (one JSON file per message). Plugin does not connect to Loriot; run scripts/loriot-websocket-to-files.sh on the node to write files here.",
+    )
+    parser.add_argument(
+        "--loriot-poll-interval-sec",
+        default=float(os.getenv("LORIOT_POLL_INTERVAL_SEC", "1.5")),
+        type=float,
+        help="seconds between Loriot inbox directory polls (default: LORIOT_POLL_INTERVAL_SEC or 1.5)",
+    )
+    default_cache = os.path.expanduser(
+        os.getenv("LORAWAN_CODEC_CACHE", "~/.cache/lorawan-listener-codecs")
+    )
+    _default_codec_map = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "codecs", "codec_map.json"
+    )
+    parser.add_argument(
+        "--codec-map",
+        default=os.getenv("LORAWAN_CODEC_MAP", _default_codec_map),
+        help="codec fallback map: path to JSON file or JSON string (device name/regex -> repo URL or path)",
+    )
+    parser.add_argument(
+        "--codec-cache-dir",
+        default=default_cache,
+        help="directory to clone GitHub codec repos into (default: LORAWAN_CODEC_CACHE or ~/.cache/lorawan-listener-codecs)",
+    )
+
     args = parser.parse_args()
 
-    #configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.INFO,
         format="%(asctime)s %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
     )
 
-    #configure client
-    mqtt_client = My_Client(args)
+    # Load codec map and warm codec cache before clients start to avoid races.
+    codec_map = Contract.load_codec_map(args.codec_map)
+    codec_contract = Contract(codec_map, args.codec_cache_dir) if codec_map and args.codec_cache_dir else None
+    if codec_contract:
+        codec_contract.warm_codec_cache()
+
+    if getattr(args, "loriot_inbox_dir", "").strip():
+        start_loriot_inbox_daemon(args, codec_contract)
+
+    mqtt_client = ChirpstackClient(args, codec_contract)
     mqtt_client.run()
 
 if __name__ == "__main__":

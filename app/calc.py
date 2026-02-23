@@ -1,12 +1,32 @@
+"""
+Packet loss and packet loss rate (PLR) calculator.
+
+Tracks frame counts per device and computes packet loss and PLR over a configurable
+time interval. Used by the shared publish pipeline for signal metrics (signal.pl, signal.plr).
+"""
 import time
+from typing import Any, Dict, Optional, Tuple
+
 
 class PacketLossCalculator:
-    def __init__(self, plr_sec: int):
-        self.devices = {}  # Dictionary to track each device's data
-        self.plr_sec = plr_sec  # Time interval for PLR calculation in seconds
+    """Computes packet loss and PLR per device over a sliding time window."""
 
-    def process_packet(self, deveui, fCnt):
-        """Process a packet from a specific device and calculate packet loss and PLR."""
+    def __init__(self, plr_sec: int) -> None:
+        """
+        plr_sec: Time interval in seconds over which PLR is computed (e.g. 3600 for hourly).
+        """
+        self.devices: Dict[Any, Dict[str, Any]] = {}
+        self.plr_sec = plr_sec
+
+    def process_packet(
+        self, deveui: Any, fCnt: Optional[int]
+    ) -> Tuple[int, Optional[float]]:
+        """
+        Process a packet from a device and update packet loss state.
+
+        Returns (pl, plr): pl is packet loss for this packet; plr is the current
+        PLR percentage for the interval if the interval has elapsed, else None.
+        """
         # Initialize device data if not already present
         if deveui not in self.devices:
             self.devices[deveui] = {

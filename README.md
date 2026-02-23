@@ -223,7 +223,7 @@ successCriteria:
 
 **--debug**: enable debug logs
 
-**--dry**: enable dry-run mode where no messages will be broadcast to Beehive
+**--dry**: enable dry-run mode where no messages will be broadcast to Beehive (applies to both ChirpStack and Loriot)
 
 **--mqtt-server-ip**: MQTT server IP address
 
@@ -238,6 +238,73 @@ successCriteria:
 **--signal-strength-indicators**: enable signal strength indicators
 
 **--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
+
+**--loriot-inbox-dir**: directory to watch for Loriot message files (one JSON file per uplink). The plugin does not connect to Loriot; run the script `scripts/loriot-websocket-to-files.sh` on the node to connect to Loriot and write message files into this directory. Can be set via `LORAWAN_LORIOT_INBOX` or `LORIOT_INBOX_DIR` environment variable. The same path must be mounted into the plugin pod (e.g. hostPath) so the plugin can read the files.
+
+**--loriot-poll-interval-sec**: seconds between polls of the Loriot inbox directory (default: 1.5). Can be set via `LORIOT_POLL_INTERVAL_SEC` environment variable.
+
+**--codec-map**: codec fallback map: path to a JSON file or a string containing JSON. Used when Loriot messages lack `decoded` or ChirpStack messages lack `object.measurements`. See [Codec fallback](#codec-fallback) below. Can be set via `LORAWAN_CODEC_MAP` environment variable.
+
+**--codec-cache-dir**: directory where GitHub codec repos are cloned (default: `~/.cache/lorawan-listener-codecs`). Can be set via `LORAWAN_CODEC_CACHE` environment variable.
+
+## Loriot Integration
+
+The plugin can receive data from **both** the local ChirpStack (MQTT) and **Loriot** at the same time. Loriot data is delivered via a **file inbox**: the plugin does not connect to Loriot (the plugin's network policy does not allow outbound WebSocket). Instead, you run a small script on the node that connects to Loriot and writes each WebSocket message to a file in a shared directory; the plugin watches that directory and processes the files.
+
+- **Loriot via file inbox**: Set `--loriot-inbox-dir` to a directory path (e.g. `/var/lorawan-loriot-inbox`). That same path must be a **hostPath** (or equivalent) mounted into the plugin pod so the plugin can read files written by the script.
+- **Shell script on the node**: Run `scripts/loriot-websocket-to-files.sh` on the node (outside the container). Set `LORIOT_WEBSOCKET_URL` to your Loriot WebSocket URL (from Application Outputs / WebSocket; include token in URL if required) and `LORIOT_INBOX_DIR` (or `LORAWAN_LORIOT_INBOX`) to the same path as `--loriot-inbox-dir`. The script connects to Loriot, writes one JSON file per message into the inbox directory, and reconnects on disconnect. The plugin picks up each file, parses it, publishes measurements, then deletes the file.
+- **LNS metadata**: For ChirpStack, published metadata uses `lns: "local_chirpstack"`. For Loriot (file-based), `lns` is `"loriot"`.
+- **Decoded payload**: If Loriot messages do not include a decoded **`object`**, the plugin can decode raw payloads when you provide a device-mapped Python codec via **--codec-map** (see [Codec fallback](#codec-fallback)). Enable **Device Name** in the LORIOT console so messages include the device name for codec map matching.
+- **No signal metrics for Loriot**: The plugin does **not** publish signal strength indicators (RSSI, SNR, PL, PLR) for Loriot uplinks.
+- **Network of gateways**: Use Loriot for devices whose gateways connect to Loriot; run the script on the node and point the plugin at the shared inbox to publish those measurements alongside local ChirpStack data.
+
+## Codec fallback
+
+When a message does **not** include a decoded payload (Loriot: missing or empty `decoded`; ChirpStack: missing `object` or `object.measurements`), the plugin can decode the raw payload using a **device-mapped Python codec** if you provide a codec map via `--codec-map`.
+
+### When it is used
+
+- **Loriot**: The WebSocket message has no usable `decoded.data` or `object`, but has raw `data` (hex) and device `name`.
+- **ChirpStack**: The MQTT message has no `object.measurements`, but has raw `data` (base64) and `deviceInfo.deviceName`.
+
+In both cases, the plugin looks up the device name in the codec map, loads the matching codec (from a GitHub repo or local path), and calls its `decode(payload_bytes)` to produce a flat dict of measurement names and values. The plugin then converts that dict into the internal measurements format and normalizes names (e.g. lowercased, safe characters).
+
+### Codec map format
+
+`--codec-map` accepts either:
+
+1. **Path to a JSON file** — if the value does not start with `{`, it is treated as a file path. The file must contain a single JSON object.
+2. **JSON string** — if the value (after trimming) starts with `{`, it is parsed as JSON.
+
+The JSON object maps **device name or regex pattern** (key) to **GitHub repo URL or local directory path** (value). The plugin matches the incoming device name by **exact key first**, then by **regex** in key order (first match wins). Use more specific patterns before broader ones.
+
+Example (file or inline JSON):
+
+```json
+{
+  "Water meter": "https://github.com/org/water-meter-codec",
+  "^MFR node .*": "https://github.com/org/mfr-codec",
+  ".*sensor.*": "/path/to/local/codec/repo"
+}
+```
+
+**Multiple codecs in one repo:** Use a path after `.git` so one Git repo can host multiple `codec.py` files. The plugin clones the repo once and loads `codec.py` from that path. Example: `"https://github.com/waggle-sensor/codec.git/codecs/water"` and `"https://github.com/waggle-sensor/codec.git/codecs/mfr_node"` both use the same repo; each device maps to `repo_root/codecs/water/codec.py` or `repo_root/codecs/mfr_node/codec.py`.
+
+An example file is provided at [examples/codec_example/codec_map.example.json](examples/codec_example/codec_map.example.json).
+
+### Codec contract
+
+The codec source (GitHub repo or local directory) must contain a `codec.py` at the **repo root** (or in a subdirectory when using a path after `.git`, e.g. `.../repo.git/codecs/water`) with a class named `Codec` and a method:
+
+- `decode(self, payload_bytes: bytes) -> dict`
+
+The method receives the raw payload as bytes (Loriot: hex-decoded; ChirpStack: base64-decoded) and must return a **flat dict** of measurement name → value (e.g. `{"temperature": 28.15, "humidity": 0.32}`). The plugin converts this to the internal measurements format and applies name normalization.
+
+Example codec: [examples/codec_example/codec.py](examples/codec_example/codec.py).
+
+### Security
+
+Codecs run arbitrary Python from the mapped repos or paths. Use only trusted sources.
 
 ## Retrieving Published Data
 
@@ -273,7 +340,7 @@ This section provides you with additional information that will help you when ex
 
 ### Signal Measurements
 
-If enabled, along with the measurements the plugin will also publish signal strength indicators to help users determine the strength of the wireless connection. The indicators published are as follows with links for more information on the indicator.
+When using **ChirpStack** and `--signal-strength-indicators` is set, the plugin publishes signal strength indicators along with measurements to help users determine the strength of the wireless connection. **Loriot** uplinks do not include signal metrics (RSSI, SNR, PL, PLR). The indicators published for ChirpStack are as follows with links for more information on the indicator.
 
 - [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
 - [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
@@ -283,7 +350,7 @@ If enabled, along with the measurements the plugin will also publish signal stre
 
 ### Metadata
 
-The examples provided are specific instances of metadata that is published by the plugin.
+The examples provided are specific instances of metadata that is published by the plugin. The **lns** (network server) value is `"local_chirpstack"` for ChirpStack and `"loriot"` for Loriot (file-based).
 
 - "Type_tag": "test device"
 - "applicationId": "5b06bc92-0510-47c1-8f24-a807f48b94a9"

@@ -1,0 +1,27 @@
+{
+  "cmd"     : "rx",
+  "seqno"   : 2,
+  "EUI"     : "0102030405060708",
+  "ts"      : 1470850675433,
+  "ack"     : false,
+  "bat"     : 156,
+  "offline" : false,
+  "name"    : "Water meter",
+  "fcnt"    : 1,
+  "port"    : 1,
+  "data"    : "0102AABB",
+  "freq"    : 868500000,
+  "dr"      : "SF12 BW125 4/5",
+  "rssi"    : -130,
+  "snr"     : 1.2,
+  "toa"     : 196,
+  "decoded": {
+    "data": {
+      "temperature": 28.15,
+      "humidity": 0.32,
+      "pulseCounter": 1
+      },
+    "errors": [],
+    "warnings": []
+    }
+}

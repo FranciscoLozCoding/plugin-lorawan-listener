@@ -1,0 +1,30 @@
+# systemd unit for loriot-websocket-to-files.sh
+#
+# Install:
+#   1. Copy this file to /etc/systemd/system/
+#   2. Create /etc/default/loriot-ws with:
+#        LORIOT_WEBSOCKET_URL=wss://us1.loriot.io/app?token=YOUR_TOKEN
+#        LORIOT_INBOX_DIR=/var/lorawan-loriot-inbox
+#   3. Edit ExecStart below to the full path of loriot-websocket-to-files.sh on this host
+#   4. sudo systemctl daemon-reload
+#   5. sudo systemctl enable loriot-websocket-to-files.service
+#   6. sudo systemctl start loriot-websocket-to-files.service
+#
+# Ensure the inbox directory exists and is writable by the user running the service:
+#   sudo mkdir -p /var/lorawan-loriot-inbox
+#   sudo chown YOUR_USER:YOUR_GROUP /var/lorawan-loriot-inbox
+
+[Unit]
+Description=Loriot WebSocket to files for lorawan-listener
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/loriot-ws
+ExecStart=/opt/plugin-lorawan-listener/scripts/loriot-websocket-to-files.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
