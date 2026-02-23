@@ -83,9 +83,12 @@ def main() -> None:
     default_cache = os.path.expanduser(
         os.getenv("LORAWAN_CODEC_CACHE", "~/.cache/lorawan-listener-codecs")
     )
+    _default_codec_map = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "codec_map.json"
+    )
     parser.add_argument(
         "--codec-map",
-        default=os.getenv("LORAWAN_CODEC_MAP", ""),
+        default=os.getenv("LORAWAN_CODEC_MAP", _default_codec_map),
         help="codec fallback map: path to JSON file or JSON string (device name/regex -> repo URL or path)",
     )
     parser.add_argument(
