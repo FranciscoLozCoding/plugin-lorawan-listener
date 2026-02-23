@@ -13,6 +13,7 @@ import logging
 import threading
 import time
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 import websocket
 from parse_loriot import parse_loriot_payload
@@ -110,7 +111,12 @@ class LoriotClient:
                     on_error=self._on_error,
                     on_close=self._on_close,
                 )
-                logging.info("Loriot WebSocket connecting to %s", self._url)
+                # Log URL with token redacted; connection refused = host unreachable or blocked
+                try:
+                    host_port = urlparse(self._url).netloc or self._url
+                except Exception:
+                    host_port = "(invalid URL)"
+                logging.info("Loriot WebSocket connecting to %s (host: %s)", self._url.split("?")[0], host_port)
                 ws.run_forever(ping_interval=30, ping_timeout=10)
             except Exception as e:
                 logging.warning("Loriot WebSocket error: %s", e)
