@@ -6,7 +6,7 @@ When the plugin receives data from a LoRaWAN device, it publishes that data to t
 
 To help users identify where the value came from, the plugin includes metadata when it publishes the value to the beehive. This metadata includes information about which specific LoRaWAN device sent the data, or other details that can help users understand the context in which the value was collected.
 
-If enabled, along with the measurements the plugin will also publish signal strength indicators to help users determine the strength of the wireless connection. The indicators published are as follows with links for more information on the indicator.
+When using **ChirpStack** with `--signal-strength-indicators`, the plugin publishes signal strength indicators. **Loriot** uplinks do not include signal metrics (RSSI, SNR, PL, PLR). The indicators for ChirpStack are:
 
 - [RSSI](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#rssi)
 - [SNR](https://www.thethingsnetwork.org/docs/lorawan/rssi-and-snr/#snr)
@@ -38,7 +38,7 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--debug**: enable debug logs
 
-**--dry**: enable dry-run mode where no messages will be broadcast to Beehive
+**--dry**: enable dry-run mode where no messages will be broadcast to Beehive (applies to both ChirpStack and Loriot)
 
 **--mqtt-server-ip**: MQTT server IP address
 
@@ -60,6 +60,14 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--loriot-app-token**: optional Loriot app token for WebSocket authentication. Can be set via `LORIOT_APP_TOKEN` environment variable.
 
+**--codec-map**: codec fallback map (path to a JSON file or a string containing JSON). Used when Loriot messages lack `decoded` or ChirpStack messages lack `object.measurements`. Map keys are device names or regex patterns; values are GitHub repo URLs or local paths to a directory containing `codec.py`. To host multiple codecs in one repo, append a path after `.git` (e.g. `https://github.com/org/codec.git/codecs/water`). Can be set via `LORAWAN_CODEC_MAP` environment variable.
+
+**--codec-cache-dir**: directory where GitHub codec repos are cloned (default: `~/.cache/lorawan-listener-codecs`). Can be set via `LORAWAN_CODEC_CACHE` environment variable.
+
+# Codec fallback
+
+When a message has no decoded payload (Loriot: missing or empty `decoded`; ChirpStack: missing `object` or `object.measurements`), the plugin can decode the raw payload using a device-mapped Python codec if `--codec-map` is set. The map is a JSON object: keys are device names or regex patterns (first match wins), values are GitHub repo URLs or local paths. The codec source must contain a `codec.py` at the repo root (or in a path after `.git`) with a class `Codec` and a method `decode(self, payload_bytes: bytes) -> dict` that returns a flat dict of measurement name → value. The plugin converts that to the internal measurements format. See the README **Codec fallback** section and the **examples/codec_example/** directory in plugin's repo for the example codec and map.
+
 # Loriot Integration
 
-When using Loriot, configure a **Payload Codec (JavaScript formatter)** in the LORIOT console so that WebSocket messages include the decoded **`object`** field. Also, make sure to **enable extended verbosity** in the LORIOT console so that the WebSocket messages can include radio information such as RSSI, SNR, and spreading factor. Finally, enable the **Device Name** option in the LORIOT console so that the WebSocket messages can include the device name.
+Enable Loriot with `--enable-loriot` and `--loriot-websocket-url`. **LNS metadata**: ChirpStack uses `lns: "local_chirpstack"`; Loriot uses the WebSocket URL host (e.g. `us1.loriot.io`). Configure a **Payload Codec** in the LORIOT console so messages include decoded **`object`**; if not present, codec fallback is used when `--codec-map` is set. Enable **Device Name** in LORIOT for codec map matching. The plugin does **not** publish signal indicators (RSSI, SNR, PL, PLR) for Loriot—only ChirpStack can publish those when `--signal-strength-indicators` is set.
