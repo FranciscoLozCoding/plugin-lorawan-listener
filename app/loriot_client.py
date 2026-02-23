@@ -24,6 +24,9 @@ class LoriotClient:
     def _on_message(self, ws, message):
         logging.debug("Loriot WebSocket message: %s", message)
         try:
+            if getattr(self.args, "dry", False):
+                self.dry_message(ws, message)
+                return
             parsed = parse_loriot_payload(
                 message,
                 self._url,
@@ -42,6 +45,38 @@ class LoriotClient:
             )
         except Exception as e:
             logging.exception("Loriot message handling failed: %s", e)
+
+    def dry_message(self, ws, message):
+        """Log raw message and decoded measurements without publishing (when --dry)."""
+        self.log_message(message)
+        self.log_measurements(message)
+
+    @staticmethod
+    def log_message(message):
+        """Log raw Loriot WebSocket message."""
+        logging.info("Loriot WebSocket message received: %s", message)
+
+    def log_measurements(self, message):
+        """Parse Loriot message and log measurements (respecting --ignore and --collect)."""
+        try:
+            parsed = parse_loriot_payload(
+                message,
+                self._url,
+                codec_contract=self.contract,
+            )
+        except Exception as e:
+            logging.error("Loriot message could not be parsed: %s", e)
+            return
+        if parsed is None:
+            logging.error("Loriot message did not contain measurements.")
+            return
+        measurements = parsed["measurements"]
+        for m in measurements:
+            if m["name"] in self.args.ignore:
+                continue
+            if self.args.collect and m["name"] not in self.args.collect:
+                continue
+            logging.info("%s: %s", m["name"], m["value"])
 
     def _on_error(self, ws, error):
         logging.warning("Loriot WebSocket error: %s", error)
