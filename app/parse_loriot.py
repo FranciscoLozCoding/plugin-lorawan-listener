@@ -69,12 +69,11 @@ def parse_loriot_payload(body, websocket_url=None, codec_contract=None):
                 device_name, raw_data, encoding="hex"
             )
 
-    if measurements is None or not measurements:
+    if not measurements:
         logging.debug("Loriot: no decoded.data/object and codec fallback did not yield measurements; skipping")
         return None
 
-    ts_ms = data.get("ts")
-    timestamp_ns = _loriot_ts_to_ns(ts_ms)
+    timestamp_ns = _loriot_ts_to_ns(data.get("ts"))
     if timestamp_ns is None:
         logging.debug("Loriot: no ts; skipping")
         return None
