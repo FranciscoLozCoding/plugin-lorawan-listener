@@ -15,7 +15,7 @@ import time
 from typing import Any, Optional
 
 import websocket
-from parse_loriot import parse_loriot_payload
+from parse_loriot import parse_loriot_payload, _hide_token
 from client import process_and_publish
 from calc import PacketLossCalculator
 
@@ -28,6 +28,7 @@ class LoriotClient:
         self.contract = contract
         self.plr_calc = PacketLossCalculator(args.plr)
         self._url = getattr(args, "loriot_websocket_url", None) or ""
+        self._hidden_token = _hide_token(self._url)
 
     def _on_message(self, ws: Any, message: str) -> None:
         logging.debug("Loriot WebSocket message: %s", message)
@@ -98,7 +99,7 @@ class LoriotClient:
         """Connect to Loriot WebSocket and process messages. Reconnects with backoff on disconnect."""
         delay = 1
         max_delay = 60
-
+        
         while True:
             try:
                 ws = websocket.WebSocketApp(
@@ -107,7 +108,7 @@ class LoriotClient:
                     on_error=self._on_error,
                     on_close=self._on_close,
                 )
-                logging.info("Loriot WebSocket connecting to %s", self._url)
+                logging.info("Loriot WebSocket connecting to %s", self._hidden_token)
                 ws.run_forever(ping_interval=30, ping_timeout=10)
             except Exception as e:
                 logging.warning("Loriot WebSocket error: %s", e)

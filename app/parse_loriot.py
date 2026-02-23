@@ -12,9 +12,16 @@ import json
 import logging
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlparse
-
+import re
 from parse import clean_string
 
+def _hide_token(url: str) -> str:
+    # Remove or redact token query param from URLs for logging
+    # Example: wss://us1.loriot.io/app?token=abcdefg&xyz=123 -> wss://us1.loriot.io/app?token=***&xyz=123
+    if not url:
+        return url
+    # Replace token=... in query with token=***
+    return re.sub(r'(\btoken=)[^&]+', r'\1***', url)
 
 def _lns_from_websocket_url(websocket_url: Optional[str]) -> str:
     """Parse host from WebSocket URL for use as lns (e.g. wss://us1.loriot.io/app?token=... -> us1.loriot.io)."""
