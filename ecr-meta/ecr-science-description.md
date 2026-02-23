@@ -56,9 +56,7 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--enable-loriot**: enable the Loriot WebSocket client to receive uplinks from the Loriot network server (runs alongside ChirpStack)
 
-**--loriot-websocket-url**: Loriot WebSocket URL (required when using --enable-loriot). Can be set via `LORIOT_WEBSOCKET_URL` environment variable.
-
-**--loriot-app-token**: optional Loriot app token for WebSocket authentication. Can be set via `LORIOT_APP_TOKEN` environment variable.
+**--loriot-websocket-url**: Loriot WebSocket URL (required when using --enable-loriot). Include token in URL if required. Can be set via `LORIOT_WEBSOCKET_URL` environment variable.
 
 **--codec-map**: codec fallback map (path to a JSON file or a string containing JSON). Used when Loriot messages lack `decoded` or ChirpStack messages lack `object.measurements`. Map keys are device names or regex patterns; values are GitHub repo URLs or local paths to a directory containing `codec.py`. To host multiple codecs in one repo, append a path after `.git` (e.g. `https://github.com/org/codec.git/codecs/water`). Can be set via `LORAWAN_CODEC_MAP` environment variable.
 

@@ -13,7 +13,6 @@ import logging
 import threading
 import time
 from typing import Any, Optional
-from urllib.parse import urlparse
 
 import websocket
 from parse_loriot import parse_loriot_payload
@@ -29,7 +28,6 @@ class LoriotClient:
         self.contract = contract
         self.plr_calc = PacketLossCalculator(args.plr)
         self._url = getattr(args, "loriot_websocket_url", None) or ""
-        self._token = getattr(args, "loriot_app_token", None) or ""
 
     def _on_message(self, ws: Any, message: str) -> None:
         logging.debug("Loriot WebSocket message: %s", message)
@@ -103,20 +101,13 @@ class LoriotClient:
 
         while True:
             try:
-                header = [f"Authorization: Bearer {self._token}"] if self._token else None
                 ws = websocket.WebSocketApp(
                     self._url,
-                    header=header,
                     on_message=self._on_message,
                     on_error=self._on_error,
                     on_close=self._on_close,
                 )
-                # Log URL with token redacted; connection refused = host unreachable or blocked
-                try:
-                    host_port = urlparse(self._url).netloc or self._url
-                except Exception:
-                    host_port = "(invalid URL)"
-                logging.info("Loriot WebSocket connecting to %s (host: %s)", self._url.split("?")[0], host_port)
+                logging.info("Loriot WebSocket connecting to %s", self._url)
                 ws.run_forever(ping_interval=30, ping_timeout=10)
             except Exception as e:
                 logging.warning("Loriot WebSocket error: %s", e)

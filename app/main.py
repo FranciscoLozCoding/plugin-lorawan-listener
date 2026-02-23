@@ -73,12 +73,7 @@ def main() -> None:
     parser.add_argument(
         "--loriot-websocket-url",
         default=os.getenv("LORIOT_WEBSOCKET_URL", ""),
-        help="Loriot WebSocket URL (required when --enable-loriot); e.g. wss://...",
-    )
-    parser.add_argument(
-        "--loriot-app-token",
-        default=os.getenv("LORIOT_APP_TOKEN", ""),
-        help="optional Loriot app token for WebSocket authentication",
+        help="Loriot WebSocket URL (required when --enable-loriot); include token in URL if required (e.g. wss://...?token=...).",
     )
     default_cache = os.path.expanduser(
         os.getenv("LORAWAN_CODEC_CACHE", "~/.cache/lorawan-listener-codecs")

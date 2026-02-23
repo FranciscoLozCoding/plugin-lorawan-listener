@@ -241,9 +241,7 @@ successCriteria:
 
 **--enable-loriot**: enable the Loriot WebSocket client to receive uplinks from the Loriot network server (runs alongside ChirpStack)
 
-**--loriot-websocket-url**: Loriot WebSocket URL (required when using --enable-loriot). Example: `wss://...`. Can be set via `LORIOT_WEBSOCKET_URL` environment variable.
-
-**--loriot-app-token**: optional Loriot app token for WebSocket authentication. Can be set via `LORIOT_APP_TOKEN` environment variable.
+**--loriot-websocket-url**: Loriot WebSocket URL (required when using --enable-loriot). Include the token in the URL if your Loriot application requires it (e.g. `wss://...?token=...`). Can be set via `LORIOT_WEBSOCKET_URL` environment variable.
 
 **--codec-map**: codec fallback map: path to a JSON file or a string containing JSON. Used when Loriot messages lack `decoded` or ChirpStack messages lack `object.measurements`. See [Codec fallback](#codec-fallback) below. Can be set via `LORAWAN_CODEC_MAP` environment variable.
 
@@ -253,7 +251,7 @@ successCriteria:
 
 The plugin can receive data from **both** the local ChirpStack (MQTT) and **Loriot** (WebSocket) at the same time. This lets you aggregate local gateway traffic and remote Loriot traffic on one node.
 
-- **Enable Loriot**: use `--enable-loriot` and set `--loriot-websocket-url` to the WebSocket URL from your Loriot application (Application Outputs / WebSocket). The plugin connects out to Loriot, so the node does not need a public IP.
+- **Enable Loriot**: use `--enable-loriot` and set `--loriot-websocket-url` to the WebSocket URL from your Loriot application (Application Outputs / WebSocket). Loriot attaches the token to the URL; use that URL as-is. The plugin connects out to Loriot, so the node does not need a public IP.
 - **LNS metadata**: For ChirpStack, published metadata uses `lns: "local_chirpstack"`. For Loriot, `lns` is derived from the WebSocket URL host (e.g. `wss://us1.loriot.io/...` → `us1.loriot.io`).
 - **Decoded payload**: Configure a **Payload Codec (JavaScript formatter)** in the LORIOT console so that WebSocket messages include the decoded **`object`** field. If messages do not include `object`, the plugin can still decode raw payloads when you provide a device-mapped Python codec via **--codec-map** (see [Codec fallback](#codec-fallback)).
 - **Device Name**: Enable the **Device Name** option in the LORIOT console so that WebSocket messages include the device name (required for codec map matching when using codec fallback).
