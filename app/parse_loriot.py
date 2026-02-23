@@ -11,17 +11,33 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
-from urllib.parse import urlparse
-import re
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
 from parse import clean_string
 
-def _hide_token(url: str) -> str:
-    # Remove or redact token query param from URLs for logging
-    # Example: wss://us1.loriot.io/app?token=abcdefg&xyz=123 -> wss://us1.loriot.io/app?token=***&xyz=123
-    if not url:
+def hide_token(url: str) -> str:
+    """Return URL with token query parameter removed for safe logging."""
+    if not url or "token=" not in url:
         return url
-    # Replace token=... in query with token=***
-    return re.sub(r'(\btoken=)[^&]+', r'\1***', url)
+    try:
+        parsed = urlparse(url)
+        if not parsed.query:
+            return url
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        if "token" not in params:
+            return url
+        params.pop("token", None)
+        new_query = urlencode(params, doseq=True)
+        return urlunparse((
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            new_query,
+            parsed.fragment,
+        ))
+    except Exception:
+        return url.split("token=")[0] + "token=***"
 
 def _lns_from_websocket_url(websocket_url: Optional[str]) -> str:
     """Parse host from WebSocket URL for use as lns (e.g. wss://us1.loriot.io/app?token=... -> us1.loriot.io)."""

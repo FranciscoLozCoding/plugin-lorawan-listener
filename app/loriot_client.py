@@ -15,7 +15,7 @@ import time
 from typing import Any, Optional
 
 import websocket
-from parse_loriot import parse_loriot_payload, _hide_token
+from parse_loriot import parse_loriot_payload, hide_token
 from client import process_and_publish
 from calc import PacketLossCalculator
 
@@ -28,7 +28,7 @@ class LoriotClient:
         self.contract = contract
         self.plr_calc = PacketLossCalculator(args.plr)
         self._url = getattr(args, "loriot_websocket_url", None) or ""
-        self._hidden_token = _hide_token(self._url)
+        self._hidden_token = hide_token(self._url)
 
     def _on_message(self, ws: Any, message: str) -> None:
         logging.debug("Loriot WebSocket message: %s", message)
