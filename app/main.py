@@ -1,3 +1,9 @@
+"""
+LoRaWAN Listener plugin entry point.
+
+Parses CLI and env, configures logging, loads and warms the codec contract (if configured),
+then starts the Loriot WebSocket client (if enabled) and the ChirpStack MQTT client.
+"""
 import logging
 import argparse
 import os
@@ -5,7 +11,9 @@ from codec_loader import Contract
 from client import ChirpstackClient
 from loriot_client import start_loriot_client_daemon
 
-def main():
+
+def main() -> None:
+    """Parse arguments, set up logging and codec contract, then run ChirpStack (and optionally Loriot) clients."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", help="enable debug logs")
     parser.add_argument(

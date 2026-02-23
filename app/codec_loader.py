@@ -1,8 +1,14 @@
 """
-Codec fallback: load device-mapped Python codecs from JSON map (file path or JSON string).
-When Loriot lacks decoded.data or ChirpStack lacks object.measurements, decode raw payload
-using a Codec class from a GitHub repo or local path. Map keys are device names or regex patterns.
+Codec fallback: device-mapped Python codecs from a JSON map (file path or JSON string).
+
+When Loriot lacks decoded.data or ChirpStack lacks object.measurements, the plugin can
+decode raw payload using a Codec class loaded from a GitHub repo or local path. Map keys
+are device names or regex patterns; values are repo URLs or paths (path after .git for
+multiple codecs in one repo). The Contract class holds the map and cache dir and
+provides warm_codec_cache() and decode_with_codec().
 """
+from __future__ import annotations
+
 import base64
 import importlib.util
 import json
@@ -11,6 +17,7 @@ import os
 import re
 import subprocess
 import threading
+from typing import Any, Dict, List, Optional, Tuple
 
 from parse import clean_string
 
@@ -22,28 +29,30 @@ _codec_instance_cache = {}
 _cache_lock = threading.Lock()
 
 
-def _resolve_entry_for_device(device_name, codec_map):
-    """Return (url_or_path, None) for the first matching key, or (None, None) if no match."""
+def _resolve_entry_for_device(
+    device_name: str, codec_map: Dict[str, str]
+) -> Optional[str]:
+    """Return url_or_path for the first matching key (exact or regex), or None if no match."""
     if not codec_map or not device_name:
-        return None, None
+        return None
     if device_name in codec_map:
-        return codec_map[device_name], None
+        return codec_map[device_name]
     for key, url_or_path in codec_map.items():
         try:
             if re.match(key, device_name):
-                return url_or_path, None
+                return url_or_path
         except re.error:
             continue
-    return None, None
+    return None
 
 
-def _is_github_url(url_or_path):
+def _is_github_url(url_or_path: Any) -> bool:
     return isinstance(url_or_path, str) and (
         url_or_path.startswith("http://") or url_or_path.startswith("https://")
     )
 
 
-def _sanitize_cache_key(url):
+def _sanitize_cache_key(url: str) -> str:
     """Derive a safe directory name from a GitHub URL."""
     s = url.strip().rstrip("/")
     for prefix in ("https://github.com/", "http://github.com/"):
@@ -53,7 +62,7 @@ def _sanitize_cache_key(url):
     return re.sub(r"[^a-zA-Z0-9._-]", "_", s)
 
 
-def _ensure_repo_cloned(url, cache_dir):
+def _ensure_repo_cloned(url: str, cache_dir: str) -> Optional[str]:
     """Clone repo into cache_dir if not present; return path to repo root. Thread-safe."""
     key = _sanitize_cache_key(url)
     dest = os.path.join(cache_dir, key)
@@ -84,7 +93,7 @@ def _ensure_repo_cloned(url, cache_dir):
             return None
 
 
-def _load_codec_from_path(codec_dir):
+def _load_codec_from_path(codec_dir: str) -> Optional[Any]:
     """Load Codec class from codec_dir/codec.py. Returns Codec instance or None. Thread-safe."""
     codec_py = os.path.join(codec_dir, "codec.py")
     if not os.path.isfile(codec_py):
@@ -108,7 +117,7 @@ def _load_codec_from_path(codec_dir):
         return instance
 
 
-def _split_base_subpath(value):
+def _split_base_subpath(value: str) -> Tuple[str, Optional[str]]:
     """
     Split map value into (clone_url_or_path, subpath). Allows one repo to host multiple codecs.
     Format: anything after .git is the path to the codec directory.
@@ -123,7 +132,7 @@ def _split_base_subpath(value):
     return base, subpath
 
 
-def _resolve_codec_dir(url_or_path, cache_dir):
+def _resolve_codec_dir(url_or_path: str, cache_dir: str) -> Optional[str]:
     """
     Resolve map value to directory that contains codec.py. Returns path or None.
     If value contains .git, the part after .git is the path to the codec (e.g. .../codec.git/codecs/water).
@@ -154,7 +163,7 @@ class Contract:
     """
 
     @staticmethod
-    def load_codec_map(value):
+    def load_codec_map(value: str) -> Optional[Dict[str, str]]:
         """
         Parse --codec-map value into a dict (pattern_or_name -> url_or_path).
         If value.strip().startswith('{'), parse as JSON string; else treat as path to JSON file.
@@ -174,13 +183,14 @@ class Contract:
             logging.warning("Codec map load failed: %s", e)
             return None
 
-    def __init__(self, codec_map, cache_dir):
+    def __init__(self, codec_map: Dict[str, str], cache_dir: str) -> None:
+        """Hold codec map and cache dir; _resolved_dirs and _codec_instances are filled on use."""
         self.codec_map = codec_map
         self.cache_dir = cache_dir
         self._resolved_dirs = {}  # url_or_path -> codec_dir
         self._codec_instances = {}  # codec_dir -> Codec instance
 
-    def warm_codec_cache(self):
+    def warm_codec_cache(self) -> None:
         """
         Load all codec.py classes for entries in the map so clones/imports happen before
         clients start, avoiding races. Call from main before starting Loriot or MQTT client.
@@ -203,17 +213,22 @@ class Contract:
             except Exception as e:
                 logging.warning("Codec warm-up failed for %s: %s", url_or_path, e)
 
-    def decode_with_codec(self, device_name, payload, encoding="hex"):
+    def decode_with_codec(
+        self,
+        device_name: str,
+        payload: str,
+        encoding: str = "hex",
+    ) -> Optional[List[Dict[str, Any]]]:
         """
-        Decode raw payload using device-mapped codec. Returns list of {name, value} or None.
+        Decode raw payload using device-mapped codec.
 
-        payload: raw payload string (hex for Loriot, base64 for ChirpStack).
-        encoding: 'hex' or 'base64'.
+        Returns list of {"name": str, "value": Any} or None. payload is hex (Loriot)
+        or base64 (ChirpStack) string; encoding must be "hex" or "base64".
         """
         if not self.codec_map or not self.cache_dir or not device_name or payload is None:
             logging.debug("Codec Contract: no codec map or cache dir or device name or payload")
             return None
-        url_or_path, _ = _resolve_entry_for_device(device_name, self.codec_map)
+        url_or_path = _resolve_entry_for_device(device_name, self.codec_map)
         if url_or_path is None:
             logging.debug("Codec Contract: no matching codec map entry for device name %s", device_name)
             return None

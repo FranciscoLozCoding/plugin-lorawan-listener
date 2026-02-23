@@ -1,16 +1,22 @@
 """
 Loriot WebSocket uplink parser.
-Requires decoded payload in 'decoded.data' or legacy 'object'. Rejects messages without decoded payload.
-Sets measurement_metadata.lns from WebSocket URL host when provided (e.g. us1.loriot.io).
+
+Parses Loriot uplink JSON. Expects decoded payload in 'decoded.data' or legacy 'object';
+if missing, can use codec_contract to decode raw payload. Sets measurement_metadata.lns
+from WebSocket URL host when provided (e.g. us1.loriot.io). Returns a normalized dict
+for the shared publish pipeline or None if the message cannot be parsed.
 """
+from __future__ import annotations
+
 import json
 import logging
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlparse
 
 from parse import clean_string
 
 
-def _lns_from_websocket_url(websocket_url):
+def _lns_from_websocket_url(websocket_url: Optional[str]) -> str:
     """Parse host from WebSocket URL for use as lns (e.g. wss://us1.loriot.io/app?token=... -> us1.loriot.io)."""
     if not websocket_url:
         return "loriot"
@@ -23,7 +29,7 @@ def _lns_from_websocket_url(websocket_url):
     return "loriot"
 
 
-def _loriot_ts_to_ns(ts_ms):
+def _loriot_ts_to_ns(ts_ms: Optional[Any]) -> Optional[int]:
     """Convert Loriot millisecond timestamp to nanoseconds since epoch."""
     if ts_ms is None:
         return None
@@ -33,13 +39,18 @@ def _loriot_ts_to_ns(ts_ms):
         return None
 
 
-def parse_loriot_payload(body, websocket_url=None, codec_contract=None):
+def parse_loriot_payload(
+    body: Union[str, Dict[str, Any]],
+    websocket_url: Optional[str] = None,
+    codec_contract: Optional[Any] = None,
+) -> Optional[Dict[str, Any]]:
     """
-    Parse Loriot uplink JSON. Requires decoded payload in 'decoded.data' or 'object', or
-    uses codec fallback when codec_contract is set and decoded is missing.
+    Parse Loriot uplink JSON into a normalized payload for the shared pipeline.
 
-    Returns dict with keys: measurements, timestamp_ns, measurement_metadata, signal_values, signal_metadata,
-    or None if decoded payload is missing and codec fallback is not used or fails.
+    Expects decoded payload in 'decoded.data' or 'object'; if missing, uses
+    codec_contract.decode_with_codec when provided. Returns a dict with keys:
+    measurements, timestamp_ns, measurement_metadata, signal_values, signal_metadata,
+    or None if the message cannot be decoded.
     """
     try:
         data = json.loads(body) if isinstance(body, str) else body

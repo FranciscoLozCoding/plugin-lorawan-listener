@@ -1,5 +1,16 @@
+"""
+ChirpStack MQTT client and shared publish pipeline.
+
+Subscribes to ChirpStack MQTT, parses payloads (with optional codec fallback when object
+is missing), and publishes measurements and optional signal metrics via the Waggle plugin.
+Supports --dry to log messages without publishing.
+"""
+from __future__ import annotations
+
 import logging
 import os
+from typing import Any, List, Dict, Optional
+
 import paho.mqtt.client as mqtt
 from waggle.plugin import Plugin
 from parse import (
@@ -14,17 +25,18 @@ from calc import PacketLossCalculator
 
 
 def process_and_publish(
-    measurements,
-    timestamp_ns,
-    measurement_metadata,
-    signal_values,
-    signal_metadata,
-    args,
-    plr_calc,
-):
+    measurements: List[Dict[str, Any]],
+    timestamp_ns: Optional[int],
+    measurement_metadata: Dict[str, Any],
+    signal_values: Optional[Dict[str, Any]],
+    signal_metadata: Optional[Dict[str, Any]],
+    args: Any,
+    plr_calc: PacketLossCalculator,
+) -> None:
     """
     Shared publish pipeline for ChirpStack and Loriot.
-    Applies --collect/--ignore, cleans measurement names, publishes each measurement
+
+    Applies --collect/--ignore, cleans measurement names, publishes each measurement,
     and optionally signal metrics (spreading factor, pl, plr, rssi, snr per gateway).
     """
     for measurement in measurements:
@@ -56,16 +68,31 @@ def process_and_publish(
         _publish_signal({"name": "signal.snr", "value": val.get("snr")}, timestamp_ns, meta)
 
 
-def _publish_signal(measurement, timestamp, metadata):
+def _publish_signal(
+    measurement: Dict[str, Any],
+    timestamp: Optional[int],
+    metadata: Dict[str, Any],
+) -> None:
+    """Publish a single signal metric (e.g. rssi, snr) to the plugin."""
     _publish(measurement, timestamp, metadata)
 
 
-def _publish_measurement(measurement, timestamp, metadata):
+def _publish_measurement(
+    measurement: Dict[str, Any],
+    timestamp: Optional[int],
+    metadata: Dict[str, Any],
+) -> None:
+    """Clean measurement name and publish to the plugin."""
     measurement = clean_message_measurement(measurement.copy())
     _publish(measurement, timestamp, metadata)
 
 
-def _publish(measurement, timestamp, metadata):
+def _publish(
+    measurement: Dict[str, Any],
+    timestamp: Optional[int],
+    metadata: Dict[str, Any],
+) -> None:
+    """Publish one measurement to the Waggle plugin if value is not None."""
     if measurement.get("value") is not None:
         with Plugin() as plugin:
             try:
@@ -85,13 +112,16 @@ def _publish(measurement, timestamp, metadata):
 
 
 class ChirpstackClient:
-    def __init__(self, args, contract=None):
+    """MQTT client for ChirpStack. Subscribes to application topics and publishes decoded measurements."""
+
+    def __init__(self, args: Any, contract: Optional[Any] = None) -> None:
+        """Build MQTT client and packet-loss calculator. Contract is the codec fallback (optional)."""
         self.args = args
         self.contract = contract
         self.client = self.configure_client()
         self.plr_calc = PacketLossCalculator(self.args.plr)
 
-    def configure_client(self):
+    def configure_client(self) -> mqtt.Client:
         client_id = self.generate_client_id()
         client = mqtt.Client(client_id)
         client.on_subscribe = self.on_subscribe
@@ -108,12 +138,13 @@ class ChirpstackClient:
         return client
 
     @staticmethod
-    def generate_client_id():
+    def generate_client_id() -> str:
+        """Return a unique MQTT client id from hostname and PID."""
         hostname = os.uname().nodename
         process_id = os.getpid()
         return f"{hostname}-{process_id}"
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, client: mqtt.Client, userdata: Any, flags: Any, rc: int) -> None:
         if rc == 0:
             logging.info("Connected to MQTT broker")
             client.subscribe(self.args.mqtt_subscribe_topic)
@@ -122,16 +153,20 @@ class ChirpstackClient:
         return
 
     @staticmethod
-    def on_subscribe(client, obj, mid, granted_qos):
-        logging.info("Subscribed: " + str(mid) + " " + str(granted_qos))
+    def on_subscribe(
+        client: mqtt.Client, obj: Any, mid: int, granted_qos: Any
+    ) -> None:
+        logging.info("Subscribed: %s %s", mid, granted_qos)
         return
 
     @staticmethod
-    def on_log(client, obj, level, string):
-        logging.debug(string) #prints if args.debug = true
+    def on_log(client: mqtt.Client, obj: Any, level: Any, string: str) -> None:
+        logging.debug(string)
         return
 
-    def publish_message(self, client, userdata, message):
+    def publish_message(
+        self, client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage
+    ) -> None:
         self.log_message(message)
 
         try:
@@ -181,22 +216,23 @@ class ChirpstackClient:
             self.plr_calc,
         )
 
-    def dry_message(self, client, userdata, message):
+    def dry_message(
+        self, client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage
+    ) -> None:
+        """Log raw message and measurements without publishing (used when --dry)."""
         self.log_message(message)
         self.log_measurements(message)
-        return
 
     @staticmethod
-    def log_message(message):
-            
-        data = (
-            "LORAWAN Message received: " + message.payload.decode("utf-8") + " with topic " + str(message.topic)
+    def log_message(message: mqtt.MQTTMessage) -> None:
+        """Log raw ChirpStack MQTT message payload and topic."""
+        logging.info(
+            "LORAWAN Message received: %s with topic %s",
+            message.payload.decode("utf-8"),
+            message.topic,
         )
-        logging.info(data) #log message received
 
-        return
-
-    def log_measurements(self,message):
+    def log_measurements(self, message: mqtt.MQTTMessage) -> None:
 
         try: #get metadata and measurements received
             metadata = parse_message_payload(message.payload.decode("utf-8"))
@@ -232,7 +268,8 @@ class ChirpstackClient:
 
         return
 
-    def run(self):
+    def run(self) -> None:
+        """Connect to MQTT broker and run the event loop (blocks until disconnect)."""
         logging.info(f"connecting [{self.args.mqtt_server_ip}:{self.args.mqtt_server_port}]...")
         self.client.connect(host=self.args.mqtt_server_ip, port=self.args.mqtt_server_port, bind_address="0.0.0.0")
         logging.info("waiting for callback...")

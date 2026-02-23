@@ -1,15 +1,24 @@
+"""
+ChirpStack MQTT payload parsing and metadata helpers.
+
+Parses JSON payloads, extracts device/metadata, normalizes measurement names (clean_string),
+and converts timestamps. Used by the ChirpStack client and the shared publish pipeline.
+"""
+from __future__ import annotations
+
 import json
 import logging
 import re
+from typing import Any, Dict, List, Optional
+
 from dateutil import parser
 
-def parse_message_payload(payload_data):
-
+def parse_message_payload(payload_data: str) -> Dict[str, Any]:
+    """Parse ChirpStack MQTT message payload JSON into a dict."""
     tmp_dict = json.loads(payload_data)
-
     return tmp_dict
 
-def Get_Measurement_metadata(message_dict):
+def Get_Measurement_metadata(message_dict: Dict[str, Any]) -> Dict[str, Any]:
     tmp_dict = {}
 
     #Get static metadata
@@ -43,14 +52,14 @@ def Get_Measurement_metadata(message_dict):
 
     return tmp_dict
 
-def clean_message_measurement(measurement):
-
+def clean_message_measurement(measurement: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize measurement name with clean_string (lowercase, alphanumeric + underscore)."""
     #clean name
     measurement["name"] = clean_string(measurement["name"])
-
     return measurement
 
-def clean_string(txt):
+def clean_string(txt: str) -> str:
+    """Lowercase and replace non-alphanumeric/underscore with underscore (for measurement names)."""
     #convert capital letters to lowercase
     txt = txt.lower()
 
@@ -62,7 +71,8 @@ def clean_string(txt):
 
     return txt
 
-def Get_Signal_Performance_values(message_dict):
+def Get_Signal_Performance_values(message_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Get Lorawan Performance values from message_dict."""
     tmp_dict = {}
 
     #Get Lorawan Performance values
@@ -94,7 +104,9 @@ def Get_Signal_Performance_values(message_dict):
 
     return tmp_dict
 
-def Get_Signal_Performance_metadata(message_dict):
+
+def Get_Signal_Performance_metadata(message_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Get Lorawan Performance metadata from message_dict."""
     tmp_dict = {}
 
     #get values from nested dictionary
@@ -120,8 +132,8 @@ def Get_Signal_Performance_metadata(message_dict):
     return tmp_dict
 
 
-def convert_time(iso_time):
-    # Parse the timestamp string using dateutil.parser
+def convert_time(iso_time: Any) -> Optional[int]:
+    """Parse ISO timestamp string to nanoseconds since epoch. Returns None on parse failure."""
     try:
         datetime_obj = parser.isoparse(iso_time)
     except ValueError as e:
