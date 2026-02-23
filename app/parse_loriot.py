@@ -78,11 +78,13 @@ def parse_loriot_payload(
 
     device_name = data.get("name")
     eui = data.get("EUI")
+    devaddr = data.get("devaddr")
 
     measurement_metadata = {
         "lns": LORIOT_LNS,
         "deviceName": device_name,
         "devEui": eui,
+        "devAddr": devaddr,
     }
 
     # Do not publish signal measurements for Loriot (rssi, snr, pl, plr, etc.)
