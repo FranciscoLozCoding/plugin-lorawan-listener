@@ -1,6 +1,7 @@
 import logging
 import argparse
 import os
+from codec_loader import Contract
 from client import My_Client
 from loriot_client import start_loriot_client_daemon
 
@@ -71,6 +72,19 @@ def main():
         default=os.getenv("LORIOT_APP_TOKEN", ""),
         help="optional Loriot app token for WebSocket authentication",
     )
+    default_cache = os.path.expanduser(
+        os.getenv("LORAWAN_CODEC_CACHE", "~/.cache/lorawan-listener-codecs")
+    )
+    parser.add_argument(
+        "--codec-map",
+        default=os.getenv("LORAWAN_CODEC_MAP", ""),
+        help="codec fallback map: path to JSON file or JSON string (device name/regex -> repo URL or path)",
+    )
+    parser.add_argument(
+        "--codec-cache-dir",
+        default=default_cache,
+        help="directory to clone GitHub codec repos into (default: LORAWAN_CODEC_CACHE or ~/.cache/lorawan-listener-codecs)",
+    )
 
     args = parser.parse_args()
 
@@ -80,10 +94,16 @@ def main():
         datefmt="%Y/%m/%d %H:%M:%S",
     )
 
-    if args.enable_loriot:
-        start_loriot_client_daemon(args)
+    # Load codec map and warm codec cache before clients start to avoid races.
+    codec_map = Contract.load_codec_map(args.codec_map)
+    codec_contract = Contract(codec_map, args.codec_cache_dir) if codec_map and args.codec_cache_dir else None
+    if codec_contract:
+        codec_contract.warm_codec_cache()
 
-    mqtt_client = My_Client(args)
+    if args.enable_loriot:
+        start_loriot_client_daemon(args, codec_contract)
+
+    mqtt_client = My_Client(args, codec_contract)
     mqtt_client.run()
 
 if __name__ == "__main__":
