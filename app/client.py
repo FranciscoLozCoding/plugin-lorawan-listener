@@ -227,7 +227,7 @@ class ChirpstackClient:
     def log_message(message: mqtt.MQTTMessage) -> None:
         """Log raw ChirpStack MQTT message payload and topic."""
         logging.info(
-            "LORAWAN Message received: %s with topic %s",
+            "ChirpStack Message received: %s with topic %s",
             message.payload.decode("utf-8"),
             message.topic,
         )
