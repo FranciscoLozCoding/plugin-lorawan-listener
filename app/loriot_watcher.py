@@ -51,8 +51,8 @@ class LoriotInboxWatcher:
         if parsed is None:
             logging.debug("Loriot inbox: no measurements in %s; skipping", path)
             return True
+        logging.info("Loriot inbox message received: %s", path)
         if getattr(self.args, "dry", False):
-            logging.info("Loriot inbox message received: %s", path)
             self._log_measurements(parsed["measurements"])
             return True
         try:
