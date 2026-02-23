@@ -51,6 +51,10 @@ class LoriotInboxWatcher:
         if parsed is None:
             logging.debug("Loriot inbox: no measurements in %s; skipping", path)
             return True
+        if getattr(self.args, "dry", False):
+            logging.info("Loriot inbox message received: %s", path)
+            self._log_measurements(parsed["measurements"])
+            return True
         try:
             process_and_publish(
                 parsed["measurements"],
@@ -65,6 +69,15 @@ class LoriotInboxWatcher:
             logging.exception("Loriot inbox: publish failed for %s: %s", path, e)
             return False
         return True
+
+    def _log_measurements(self, measurements: list) -> None:
+        """Log measurement names and values (respecting --ignore and --collect). Used when --dry."""
+        for m in measurements:
+            if m["name"] in self.args.ignore:
+                continue
+            if self.args.collect and m["name"] not in self.args.collect:
+                continue
+            logging.info("%s: %s", m["name"], m["value"])
 
     def _run_loop(self) -> None:
         """Poll inbox directory for files, process and delete. Runs until thread is stopped."""
