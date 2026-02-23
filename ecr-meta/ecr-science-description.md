@@ -1,6 +1,6 @@
 ## About The Plugin
 
-This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. It can receive data from **both** the local ChirpStack (MQTT) and **Loriot** (WebSocket) at the same time, so you can aggregate local gateway traffic and remote Loriot traffic on one node. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
+This plugin is designed to handle the configuration of the backend MQTT (Message Queuing Telemetry Transport) to receive value(s) from LoRaWAN (Long Range Wide Area Network) devices. It can receive data from **both** the local ChirpStack (MQTT) and **Loriot** (via file inbox) at the same time, so you can aggregate local gateway traffic and remote Loriot traffic on one node. Essentially, it sets up a way for the LoRaWAN devices to send data to a central location, where it can be used by other applications.
 
 When the plugin receives data from a LoRaWAN device, it publishes that data to the beehive. This is where all the data received from the LoRaWAN devices is stored. Other users can then subscribe to the measurement(s) to access the data, or use it to build larger applications that rely on LoRaWAN data.
 
@@ -54,9 +54,7 @@ For more information see [Waggle-lorawan](https://github.com/waggle-sensor/waggl
 
 **--plr**: plr's(packet loss rate) time interval in seconds, for example 3600 will mean plr will be measured every hour
 
-**--enable-loriot**: enable the Loriot WebSocket client to receive uplinks from the Loriot network server (runs alongside ChirpStack)
-
-**--loriot-websocket-url**: Loriot WebSocket URL (required when using --enable-loriot). Include token in URL if required. Can be set via `LORIOT_WEBSOCKET_URL` environment variable.
+**--loriot-inbox-dir**: directory to watch for Loriot message files. Plugin does not connect to Loriot; run `scripts/loriot-websocket-to-files.sh` on the node to write messages here. Env: `LORAWAN_LORIOT_INBOX` or `LORIOT_INBOX_DIR`.
 
 **--codec-map**: codec fallback map (path to a JSON file or a string containing JSON). Used when Loriot messages lack `decoded` or ChirpStack messages lack `object.measurements`. Map keys are device names or regex patterns; values are GitHub repo URLs or local paths to a directory containing `codec.py`. To host multiple codecs in one repo, append a path after `.git` (e.g. `https://github.com/org/codec.git/codecs/water`). Can be set via `LORAWAN_CODEC_MAP` environment variable.
 
@@ -68,4 +66,4 @@ When a message has no decoded payload (Loriot: missing or empty `decoded`; Chirp
 
 # Loriot Integration
 
-Enable Loriot with `--enable-loriot` and `--loriot-websocket-url`. **LNS metadata**: ChirpStack uses `lns: "local_chirpstack"`; Loriot uses the WebSocket URL host (e.g. `us1.loriot.io`). Configure a **Payload Codec** in the LORIOT console so messages include decoded **`object`**; if not present, codec fallback is used when `--codec-map` is set. Enable **Device Name** in LORIOT for codec map matching. The plugin does **not** publish signal indicators (RSSI, SNR, PL, PLR) for Loriot—only ChirpStack can publish those when `--signal-strength-indicators` is set.
+Loriot input is via **file inbox** only (plugin does not connect to Loriot). Set `--loriot-inbox-dir` to a path that is mounted into the plugin pod; run `scripts/loriot-websocket-to-files.sh` on the node with `LORIOT_WEBSOCKET_URL` and `LORIOT_INBOX_DIR` (or `LORAWAN_LORIOT_INBOX`) set. **LNS metadata**: ChirpStack uses `lns: "local_chirpstack"`; Loriot uses `lns: "loriot"`. Codec fallback and Device Name in LORIOT apply as in the README. The plugin does **not** publish signal indicators for Loriot.
