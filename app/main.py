@@ -2,14 +2,14 @@
 LoRaWAN Listener plugin entry point.
 
 Parses CLI and env, configures logging, loads and warms the codec contract (if configured),
-then starts the Loriot WebSocket client (if enabled) and the ChirpStack MQTT client.
+then starts the Loriot inbox watcher (if --loriot-inbox-dir is set) and the ChirpStack MQTT client.
 """
 import logging
 import argparse
 import os
 from codec_loader import Contract
 from client import ChirpstackClient
-from loriot_client import start_loriot_client_daemon
+from loriot_watcher import start_loriot_inbox_daemon
 
 
 def main() -> None:
@@ -65,21 +65,21 @@ def main() -> None:
         type=int
     )
     parser.add_argument(
-        "--enable-loriot",
-        action="store_true",
-        default=False,
-        help="enable Loriot WebSocket client to receive uplinks from Loriot network server",
+        "--loriot-inbox-dir",
+        default=os.getenv("LORIOT_INBOX_DIR", ""),
+        help="directory to watch for Loriot message files (one JSON file per message). Plugin does not connect to Loriot; run scripts/loriot-websocket-to-files.sh on the node to write files here.",
     )
     parser.add_argument(
-        "--loriot-websocket-url",
-        default=os.getenv("LORIOT_WEBSOCKET_URL", ""),
-        help="Loriot WebSocket URL (required when --enable-loriot); include token in URL if required (e.g. wss://...?token=...).",
+        "--loriot-poll-interval-sec",
+        default=float(os.getenv("LORIOT_POLL_INTERVAL_SEC", "1.5")),
+        type=float,
+        help="seconds between Loriot inbox directory polls (default: LORIOT_POLL_INTERVAL_SEC or 1.5)",
     )
     default_cache = os.path.expanduser(
         os.getenv("LORAWAN_CODEC_CACHE", "~/.cache/lorawan-listener-codecs")
     )
     _default_codec_map = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "codec_map.json"
+        os.path.dirname(os.path.abspath(__file__)), "codecs", "codec_map.json"
     )
     parser.add_argument(
         "--codec-map",
@@ -106,8 +106,8 @@ def main() -> None:
     if codec_contract:
         codec_contract.warm_codec_cache()
 
-    if args.enable_loriot:
-        start_loriot_client_daemon(args, codec_contract)
+    if getattr(args, "loriot_inbox_dir", "").strip():
+        start_loriot_inbox_daemon(args, codec_contract)
 
     mqtt_client = ChirpstackClient(args, codec_contract)
     mqtt_client.run()

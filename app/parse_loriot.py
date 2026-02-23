@@ -1,56 +1,21 @@
 """
-Loriot WebSocket uplink parser.
+Loriot uplink parser.
 
-Parses Loriot uplink JSON. Expects decoded payload in 'decoded.data' or legacy 'object';
-if missing, can use codec_contract to decode raw payload. Sets measurement_metadata.lns
-from WebSocket URL host when provided (e.g. us1.loriot.io). Returns a normalized dict
-for the shared publish pipeline or None if the message cannot be parsed.
+Parses Loriot uplink JSON (e.g. from file or WebSocket). Expects decoded payload in
+'decoded.data' or legacy 'object'; if missing, can use codec_contract to decode raw
+payload. Sets measurement_metadata.lns to "loriot" (Loriot is decoupled from the
+listener; messages may come from files). Returns a normalized dict for the shared
+publish pipeline or None if the message cannot be parsed.
 """
 from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+from typing import Any, Dict, Optional, Union
 
 from parse import clean_string
 
-def hide_token(url: str) -> str:
-    """Return URL with token query parameter removed for safe logging."""
-    if not url or "token=" not in url:
-        return url
-    try:
-        parsed = urlparse(url)
-        if not parsed.query:
-            return url
-        params = parse_qs(parsed.query, keep_blank_values=True)
-        if "token" not in params:
-            return url
-        params.pop("token", None)
-        new_query = urlencode(params, doseq=True)
-        return urlunparse((
-            parsed.scheme,
-            parsed.netloc,
-            parsed.path,
-            parsed.params,
-            new_query,
-            parsed.fragment,
-        ))
-    except Exception:
-        return url.split("token=")[0] + "token=***"
-
-def _lns_from_websocket_url(websocket_url: Optional[str]) -> str:
-    """Parse host from WebSocket URL for use as lns (e.g. wss://us1.loriot.io/app?token=... -> us1.loriot.io)."""
-    if not websocket_url:
-        return "loriot"
-    try:
-        parsed = urlparse(websocket_url)
-        if parsed.netloc:
-            return parsed.netloc
-    except Exception:
-        pass
-    return "loriot"
-
+LORIOT_LNS = "loriot"
 
 def _loriot_ts_to_ns(ts_ms: Optional[Any]) -> Optional[int]:
     """Convert Loriot millisecond timestamp to nanoseconds since epoch."""
@@ -64,7 +29,6 @@ def _loriot_ts_to_ns(ts_ms: Optional[Any]) -> Optional[int]:
 
 def parse_loriot_payload(
     body: Union[str, Dict[str, Any]],
-    websocket_url: Optional[str] = None,
     codec_contract: Optional[Any] = None,
 ) -> Optional[Dict[str, Any]]:
     """
@@ -112,12 +76,11 @@ def parse_loriot_payload(
         logging.debug("Loriot: no ts; skipping")
         return None
 
-    lns = _lns_from_websocket_url(websocket_url)
     device_name = data.get("name")
     eui = data.get("EUI")
 
     measurement_metadata = {
-        "lns": lns,
+        "lns": LORIOT_LNS,
         "deviceName": device_name,
         "devEui": eui,
     }
