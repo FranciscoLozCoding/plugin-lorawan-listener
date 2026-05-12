@@ -39,6 +39,12 @@ def main() -> None:
         help="MQTT subscribe topic",
     )
     parser.add_argument(
+        "--mqtt-keepalive",
+        default=int(os.getenv("MQTT_KEEPALIVE", "60")),
+        type=int,
+        help="MQTT keepalive interval in seconds (PINGREQ); lower if the broker drops idle clients (default: MQTT_KEEPALIVE or 60)",
+    )
+    parser.add_argument(
         "--collect",
         nargs="*",  # 0 or more values expected => creates a list
         type=str,
