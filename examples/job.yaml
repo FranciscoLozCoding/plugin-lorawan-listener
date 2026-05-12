@@ -3,7 +3,7 @@ name: W07C_Lorawan_network
 plugins:
 - name: lorawan-listener
   pluginSpec:
-    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.18
+    image: registry.sagecontinuum.org/flozano/lorawan-listener:0.0.19
     args:
     - --signal-strength-indicators
     - --plr

@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, List, Dict, Optional
+import queue
+import threading
+from typing import Any, List, Dict, Optional, Tuple
 
 import paho.mqtt.client as mqtt
 from waggle.plugin import Plugin
@@ -118,6 +120,8 @@ class ChirpstackClient:
         """Build MQTT client and packet-loss calculator. Contract is the codec fallback (optional)."""
         self.args = args
         self.contract = contract
+        self._inbound: "queue.SimpleQueue[Tuple[str, bytes, bool]]" = queue.SimpleQueue()
+        self._worker = threading.Thread(target=self._inbound_worker, name="mqtt-inbound-worker", daemon=True)
         self.client = self.configure_client()
         self.plr_calc = PacketLossCalculator(self.args.plr)
 
@@ -126,14 +130,12 @@ class ChirpstackClient:
         client = mqtt.Client(client_id)
         client.on_subscribe = self.on_subscribe
         client.on_connect = self.on_connect
+        client.on_disconnect = self.on_disconnect
         #reconnect_delay_set: 
         # delay is the number of seconds to wait between successive reconnect attempts(default=1).
         # delay_max is the maximum number of seconds to wait between reconnection attempts(default=1)
         client.reconnect_delay_set(min_delay=5, max_delay=60)
-        if self.args.dry:
-            client.on_message = lambda client, userdata, message: self.dry_message(client, userdata, message)
-        else:
-            client.on_message = lambda client, userdata, message: self.publish_message(client, userdata, message)
+        client.on_message = self._on_message_enqueue
         client.on_log = self.on_log
         return client
 
@@ -164,13 +166,51 @@ class ChirpstackClient:
         logging.debug(string)
         return
 
-    def publish_message(
+    def on_disconnect(self, client: mqtt.Client, userdata: Any, rc: int) -> None:
+        """Log disconnect; loop_forever will reconnect when rc indicates an error."""
+        if rc != 0:
+            logging.warning(
+                "MQTT disconnected unexpectedly (rc=%s); reconnecting with backoff",
+                rc,
+            )
+        else:
+            logging.info("MQTT disconnected (rc=%s)", rc)
+
+    def _on_message_enqueue(
         self, client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage
     ) -> None:
-        self.log_message(message)
+        """Queue a copy of the payload so the network thread returns quickly (keepalive works)."""
+        topic = message.topic
+        if isinstance(topic, bytes):
+            topic = topic.decode("utf-8")
+        self._inbound.put((topic, bytes(message.payload), self.args.dry))
+
+    def _inbound_worker(self) -> None:
+        """Process MQTT payloads off the network thread so PINGREQ/PINGRESP stay timely."""
+        while True:
+            topic, payload, dry = self._inbound.get()
+            try:
+                if dry:
+                    self._dry_from_queue(topic, payload)
+                else:
+                    self._publish_from_queue(topic, payload)
+            except Exception:
+                logging.exception("ChirpStack message handling failed")
+
+    def _log_inbound(self, topic: str, payload: bytes) -> None:
+        """Log the inbound message from the worker queue."""
+        logging.info(
+            "ChirpStack Message received: %s with topic %s",
+            payload.decode("utf-8"),
+            topic,
+        )
+
+    def _publish_from_queue(self, topic: str, payload: bytes) -> None:
+        """Publish a message from the worker queue."""
+        self._log_inbound(topic, payload)
 
         try:
-            metadata = parse_message_payload(message.payload.decode("utf-8"))
+            metadata = parse_message_payload(payload.decode("utf-8"))
         except Exception:
             logging.error("Message payload could not be parsed.")
             return
@@ -216,61 +256,61 @@ class ChirpstackClient:
             self.plr_calc,
         )
 
-    def dry_message(
-        self, client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage
-    ) -> None:
-        """Log raw message and measurements without publishing (used when --dry)."""
-        self.log_message(message)
-        self.log_measurements(message)
+    def _dry_from_queue(self, topic: str, payload: bytes) -> None:
+        """Log raw message and measurements without publishing (used when --dry) from the worker queue."""
+        self._log_inbound(topic, payload)
+        self._log_measurements_from_payload(payload)
 
-    @staticmethod
-    def log_message(message: mqtt.MQTTMessage) -> None:
-        """Log raw ChirpStack MQTT message payload and topic."""
-        logging.info(
-            "ChirpStack Message received: %s with topic %s",
-            message.payload.decode("utf-8"),
-            message.topic,
-        )
-
-    def log_measurements(self, message: mqtt.MQTTMessage) -> None:
-
-        try: #get metadata and measurements received
-            metadata = parse_message_payload(message.payload.decode("utf-8"))
+    def _log_measurements_from_payload(self, payload: bytes) -> None:
+        """Log measurements from the payload in the worker queue."""
+        try:
+            metadata = parse_message_payload(payload.decode("utf-8"))
             measurements = metadata["object"]["measurements"]
-        except:
+        except Exception:
             logging.error("Message did not contain measurements.")
             return
 
         if self.args.signal_strength_indicators:
             Performance_vals = Get_Signal_Performance_values(metadata)
             Performance_metadata = Get_Signal_Performance_metadata(metadata)
-        
+
         for measurement in measurements:
-            # Skip the measurement if it's in the ignore list
             if measurement["name"] in self.args.ignore:
                 continue
-            if self.args.collect: #true if not empty
-                if measurement["name"] in self.args.collect: #if not empty only log measurements in list
+            if self.args.collect:
+                if measurement["name"] in self.args.collect:
                     logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
-            else: #else collect is empty so log all measurements
-                    logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
+            else:
+                logging.info(str(measurement["name"]) + ": " + str(measurement["value"]))
 
         if self.args.signal_strength_indicators:
-            for val in Performance_vals['rxInfo']:
+            for val in Performance_vals["rxInfo"]:
                 logging.info("gatewayId: " + str(val["gatewayId"]))
                 logging.info("  rssi: " + str(val["rssi"]))
                 logging.info("  snr: " + str(val["snr"]))
             logging.info("spreading factor: " + str(Performance_vals["spreadingfactor"]))
-            pl,plr = self.plr_calc.process_packet(Performance_metadata['devEui'], Performance_vals['fCnt'])
-            logging.info(f"packet loss: {pl}")
+            pl, plr = self.plr_calc.process_packet(
+                Performance_metadata["devEui"], Performance_vals["fCnt"]
+            )
+            logging.info("packet loss: %s", pl)
             if plr is not None:
-                logging.info(f"packet loss rate: {plr:.2f}%")
-
-        return
+                logging.info("packet loss rate: %.2f%%", plr)
 
     def run(self) -> None:
         """Connect to MQTT broker and run the event loop (blocks until disconnect)."""
-        logging.info(f"connecting [{self.args.mqtt_server_ip}:{self.args.mqtt_server_port}]...")
-        self.client.connect(host=self.args.mqtt_server_ip, port=self.args.mqtt_server_port, bind_address="0.0.0.0")
+        self._worker.start()
+        keepalive = getattr(self.args, "mqtt_keepalive", 60)
+        logging.info(
+            "connecting [%s:%s] keepalive=%ss...",
+            self.args.mqtt_server_ip,
+            self.args.mqtt_server_port,
+            keepalive,
+        )
+        self.client.connect(
+            host=self.args.mqtt_server_ip,
+            port=self.args.mqtt_server_port,
+            keepalive=keepalive,
+            bind_address="0.0.0.0",
+        )
         logging.info("waiting for callback...")
         self.client.loop_forever()
