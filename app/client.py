@@ -198,6 +198,7 @@ class ChirpstackClient:
                 logging.exception("ChirpStack message handling failed")
 
     def _log_inbound(self, topic: str, payload: bytes) -> None:
+        """Log the inbound message from the worker queue."""
         logging.info(
             "ChirpStack Message received: %s with topic %s",
             payload.decode("utf-8"),
@@ -205,6 +206,7 @@ class ChirpstackClient:
         )
 
     def _publish_from_queue(self, topic: str, payload: bytes) -> None:
+        """Publish a message from the worker queue."""
         self._log_inbound(topic, payload)
 
         try:
@@ -255,11 +257,12 @@ class ChirpstackClient:
         )
 
     def _dry_from_queue(self, topic: str, payload: bytes) -> None:
-        """Log raw message and measurements without publishing (used when --dry)."""
+        """Log raw message and measurements without publishing (used when --dry) from the worker queue."""
         self._log_inbound(topic, payload)
         self._log_measurements_from_payload(payload)
 
     def _log_measurements_from_payload(self, payload: bytes) -> None:
+        """Log measurements from the payload in the worker queue."""
         try:
             metadata = parse_message_payload(payload.decode("utf-8"))
             measurements = metadata["object"]["measurements"]
